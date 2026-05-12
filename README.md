@@ -1,7 +1,7 @@
 # Frontend - Plataforma Colegio Bernardo O’Higgins
 
 Frontend desarrollado en React para la plataforma de gestión escolar del Colegio Bernardo O’Higgins.  
-Este proyecto forma parte de una arquitectura distribuida basada en microservicios desarrollados con Spring Boot y autenticación JWT.
+Este proyecto forma parte de una arquitectura basada en microservicios desarrollados con Spring Boot y autenticación mediante JWT.
 
 ---
 
@@ -9,7 +9,7 @@ Este proyecto forma parte de una arquitectura distribuida basada en microservici
 
 La aplicación frontend permite interactuar con los distintos microservicios del ecosistema académico mediante una interfaz web moderna y modular.
 
-El sistema fue desarrollado utilizando React + Vite, consumiendo APIs REST protegidas mediante tokens JWT.
+El sistema fue desarrollado utilizando React + Vite y consume APIs REST protegidas mediante tokens JWT.
 
 Actualmente el frontend incorpora funcionalidades de:
 
@@ -18,12 +18,14 @@ Actualmente el frontend incorpora funcionalidades de:
 - Gestión de usuarios.
 - Consumo de APIs REST.
 - Manejo de autenticación JWT.
-- Navegación mediante componentes reutilizables.
+- Control de acceso basado en roles.
+- Navegación mediante React Router DOM.
 
 ---
+
 # Objetivo del frontend
 
-Desarrollar una interfaz web moderna que permita consumir los microservicios del sistema académico del Colegio Bernardo O’Higgins, facilitando la gestión institucional mediante una experiencia rápida, organizada y segura.
+Desarrollar una interfaz web moderna y segura que permita consumir los microservicios del sistema académico del Colegio Bernardo O’Higgins, facilitando la administración institucional mediante una experiencia rápida, organizada y escalable.
 
 ---
 
@@ -31,7 +33,7 @@ Desarrollar una interfaz web moderna que permita consumir los microservicios del
 
 | Tecnología | Uso |
 |---|---|
-| React | Construcción de interfaz de usuario |
+| React 19 | Construcción de interfaz de usuario |
 | Vite | Entorno de desarrollo y build |
 | JavaScript ES6+ | Desarrollo frontend |
 | CSS3 | Estilos personalizados |
@@ -39,6 +41,39 @@ Desarrollar una interfaz web moderna que permita consumir los microservicios del
 | Fetch API | Consumo de APIs REST |
 | ESLint | Estandarización de código |
 | JWT | Autenticación y autorización |
+| LocalStorage | Persistencia de sesión |
+
+---
+
+# Dependencias principales
+
+## Producción
+
+```json
+"dependencies": {
+  "react": "^19.2.5",
+  "react-dom": "^19.2.5",
+  "react-router-dom": "^7.15.0"
+}
+```
+
+---
+
+## Desarrollo
+
+```json
+"devDependencies": {
+  "@eslint/js": "^10.0.1",
+  "@types/react": "^19.2.14",
+  "@types/react-dom": "^19.2.3",
+  "@vitejs/plugin-react": "^6.0.1",
+  "eslint": "^10.2.1",
+  "eslint-plugin-react-hooks": "^7.1.1",
+  "eslint-plugin-react-refresh": "^0.5.2",
+  "globals": "^17.5.0",
+  "vite": "^8.0.10"
+}
+```
 
 ---
 
@@ -84,13 +119,14 @@ frontend-colegio-react/
 ```
 
 ---
+
 # Patrones de diseño implementados
 
 Durante el desarrollo del frontend se aplicaron distintos patrones de diseño para asegurar mantenibilidad, reutilización y escalabilidad.
 
 ---
 
-## 1. Service Pattern
+# 1. Service Pattern
 
 Implementado en:
 
@@ -103,44 +139,48 @@ Archivos:
 - authService.js
 - usuarioService.js
 
-### Objetivo
+## Objetivo
 
 Separar la lógica de consumo de APIs de la lógica visual de los componentes React.
 
-### Beneficios
+## Beneficios
 
 - Código más mantenible.
 - Reutilización de llamadas HTTP.
 - Componentes más limpios.
+- Mejor organización del proyecto.
 - Facilita cambios futuros en endpoints.
 
-### Ejemplo
+## Ejemplo
 
 ```javascript
-export async function obtenerUsuarios() {
-    const response = await fetch(url);
-    return response.json();
-}
+export const obtenerUsuarios = async () => {
+    const res = await fetch(API_URL, {
+        headers: obtenerCabeceras()
+    });
+
+    return await res.json();
+};
 ```
 
 ---
 
-## 2. Component-Based Architecture
+# 2. Component-Based Architecture
 
 Implementado mediante componentes reutilizables React.
 
-### Objetivo
+## Objetivo
 
-Separar funcionalidades en componentes independientes.
+Separar funcionalidades en componentes independientes y reutilizables.
 
-### Beneficios
+## Beneficios
 
-- Reutilización.
 - Escalabilidad.
+- Reutilización.
 - Mantenimiento más sencillo.
 - Separación clara de responsabilidades.
 
-### Ejemplo
+## Ejemplo
 
 ```bash
 components/RutaProtegida.jsx
@@ -148,7 +188,7 @@ components/RutaProtegida.jsx
 
 ---
 
-## 3. Protected Route Pattern
+# 3. Protected Route Pattern
 
 Implementado en:
 
@@ -156,15 +196,32 @@ Implementado en:
 RutaProtegida.jsx
 ```
 
-### Objetivo
+## Objetivo
 
-Restringir acceso a vistas privadas si el usuario no está autenticado.
+Restringir acceso a vistas privadas cuando el usuario no se encuentra autenticado o no posee el rol adecuado.
 
-### Beneficios
+## Funcionamiento
+
+El componente:
+
+- Verifica existencia del token JWT.
+- Verifica rol del usuario.
+- Redirecciona automáticamente al login si no cumple los permisos.
+
+## Ejemplo
+
+```javascript
+if (!token) {
+    return <Navigate to="/login" replace />;
+}
+```
+
+## Beneficios
 
 - Seguridad.
-- Control de acceso.
-- Protección de navegación.
+- Protección de rutas privadas.
+- Control de acceso por roles.
+- Mejor experiencia de navegación.
 
 ---
 
@@ -172,7 +229,7 @@ Restringir acceso a vistas privadas si el usuario no está autenticado.
 
 ## Separación de responsabilidades
 
-- Pages → Vistas.
+- Pages → Vistas principales.
 - Services → Lógica HTTP.
 - Components → Componentes reutilizables.
 - Styles → Estilos separados.
@@ -187,45 +244,73 @@ Cada funcionalidad fue organizada en carpetas específicas para facilitar el man
 
 ## Uso de ESLint
 
-Se incorporó ESLint para mantener un estándar de código consistente.
+Se incorporó ESLint para mantener un estándar de código consistente y detectar errores durante el desarrollo.
 
 ---
 
-## Autenticación desacoplada
+## Persistencia de sesión
 
-La lógica JWT fue separada del frontend visual utilizando servicios independientes.
+La autenticación se mantiene utilizando LocalStorage:
+
+```javascript
+localStorage.setItem('token_colegio', datos.token);
+localStorage.setItem('usuario_rol', datos.rol);
+```
+
+---
+
+## Manejo de rutas
+
+Se utilizó React Router DOM para gestionar la navegación de forma dinámica entre vistas.
 
 ---
 
 # Funcionalidades implementadas
 
-## Login de usuarios
+# Login de usuarios
 
-Permite autenticación mediante JWT consumiendo el microservicio Auth.
+Vista encargada de autenticar usuarios mediante JWT.
 
-### Funciones
+## Funciones
 
 - Inicio de sesión.
 - Validación de credenciales.
-- Obtención de token.
+- Obtención de token JWT.
 - Persistencia de sesión.
+- Almacenamiento de rol.
+
+## Endpoint consumido
+
+```http
+POST http://localhost:8090/api/auth/login
+```
 
 ---
 
-## Gestión de usuarios
+# Gestión de usuarios
 
 Vista encargada de consumir el microservicio Usuario.
 
-### Operaciones
+## Operaciones implementadas
 
 - Obtener usuarios.
 - Crear usuarios.
-- Actualizar usuarios.
+- Editar usuarios.
 - Eliminar usuarios.
+- Cerrar sesión.
+
+## Endpoints consumidos
+
+```http
+GET    /api/usuarios
+POST   /api/usuarios/crear
+PUT    /api/usuarios/{id}
+DELETE /api/usuarios/{id}
+```
 
 ---
 
-## Protección de rutas
+# Protección de rutas
 
 Implementada mediante:
 
@@ -233,7 +318,19 @@ Implementada mediante:
 RutaProtegida.jsx
 ```
 
-Permite bloquear acceso a páginas privadas si no existe autenticación válida.
+## Rol requerido
+
+Actualmente la ruta:
+
+```bash
+/usuarios
+```
+
+solo puede ser accedida por usuarios con rol:
+
+```bash
+ADMINISTRADOR
+```
 
 ---
 
@@ -241,7 +338,7 @@ Permite bloquear acceso a páginas privadas si no existe autenticación válida.
 
 Este frontend consume una arquitectura backend basada en microservicios desarrollados con Spring Boot.
 
-## Backend conectado
+## Servicios conectados
 
 - API Gateway
 - Eureka Server
@@ -257,28 +354,30 @@ Este frontend consume una arquitectura backend basada en microservicios desarrol
 
 # Patrón arquitectónico utilizado
 
-## Arquitectura de Microservicios
+# Arquitectura de Microservicios
 
 El frontend consume servicios desacoplados e independientes.
 
-### Beneficios
+## Beneficios
 
 - Escalabilidad.
 - Despliegue independiente.
 - Mejor mantenibilidad.
 - Separación de dominios.
+- Mayor modularidad.
 
 ---
 
-## Patrón BFF (Backend For Frontend)
+# Patrón BFF (Backend For Frontend)
 
 El sistema utiliza un Backend For Frontend para consolidar información proveniente de múltiples microservicios.
 
-### Beneficios
+## Beneficios
 
 - Reduce llamadas desde frontend.
 - Optimiza rendimiento.
 - Centraliza agregación de datos.
+- Simplifica consumo de información.
 
 ---
 
@@ -289,7 +388,7 @@ El equipo utilizó GitHub Flow para el control de versiones.
 ## Flujo utilizado
 
 - main → Rama principal estable.
-- feature/* → Desarrollo de nuevas funcionalidades.
+- feature/* → Desarrollo de funcionalidades.
 - Pull Requests → Integración de cambios.
 - Merge → Integración validada.
 
@@ -310,8 +409,8 @@ feature/auth-service
 
 - Trabajo colaborativo simultáneo.
 - Prevención de conflictos.
-- Mayor estabilidad.
-- Mejor trazabilidad del código.
+- Mejor trazabilidad.
+- Mayor estabilidad del proyecto.
 
 ---
 
@@ -325,7 +424,7 @@ git clone https://github.com/Mayckol2005/FullStack-III-Frontend.git
 
 ---
 
-## 2. Entrar al proyecto
+## 2. Ingresar al proyecto
 
 ```bash
 cd frontend-colegio-react
@@ -375,11 +474,11 @@ Inicia servidor de desarrollo Vite.
 npm run build
 ```
 
-Genera versión optimizada de producción.
+Genera versión optimizada para producción.
 
 ---
 
-## Preview producción
+## Preview de producción
 
 ```bash
 npm run preview
@@ -389,21 +488,13 @@ Permite visualizar la build final localmente.
 
 ---
 
-# Dependencias principales
-
-## React
+## Linter
 
 ```bash
-npm install react react-dom
+npm run lint
 ```
 
----
-
-## React Router DOM
-
-```bash
-npm install react-router-dom
-```
+Ejecuta ESLint para validar calidad y estandarización del código.
 
 ---
 
@@ -413,6 +504,7 @@ npm install react-router-dom
 - npm v9 o superior
 - Backend ejecutándose
 - API Gateway activo
+- Microservicios activos
 
 ---
 
@@ -447,5 +539,3 @@ Desarrollo Fullstack III
 # Profesor
 
 Marcelo Crisostomo
-
----
