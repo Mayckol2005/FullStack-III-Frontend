@@ -1,65 +1,64 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Corregimos la importación para usar el nombre exacto de tu función
 import { iniciarSesion } from '../services/authService';
 
 function Login() {
-    // Estados para los inputs
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(false);
-    
+    const [credenciales, setCredenciales] = useState({ email: '', password: '' });
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    const manejarEnvio = async (e) => {
-    e.preventDefault();
-    setError(false);
+    const handleChange = (e) => {
+        setCredenciales({ ...credenciales, [e.target.name]: e.target.value });
+    };
 
-    try {
-        const datos = await iniciarSesion(email, password);
-        
-        // GUARDAMOS AMBOS DATOS:
-        localStorage.setItem('token_colegio', datos.token);
-        localStorage.setItem('usuario_rol', datos.rol); 
-
-        navigate('/usuarios');
-    } catch (err) {
-        setError(true);
-    }
-};
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        try {
+            // Pasamos el email y la contraseña separados, tal como lo pide tu authService.js
+            const data = await iniciarSesion(credenciales.email, credenciales.password);
+            
+            if (data && data.token) {
+                localStorage.setItem('token_colegio', data.token);
+                // Asegúrate de que tu backend esté enviando el 'rol' junto con el token
+                localStorage.setItem('usuario_rol', data.rol); 
+                
+                // Redirección forzada a la página principal
+                navigate('/home'); 
+            } else {
+                setError("Credenciales incorrectas");
+            }
+        } catch (err) {
+            setError("Error al conectar con el servidor o credenciales inválidas");
+        }
+    };
 
     return (
-        <div className="contenedor" style={{ maxWidth: '400px', marginTop: '100px' }}>
-            <h1 style={{ textAlign: 'center' }}>Acceso al Sistema</h1>
-            
-            <form onSubmit={manejarEnvio}>
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Correo Electrónico:</label>
+        <div className="contenedor">
+            <div style={{ maxWidth: '400px', margin: 'auto', textAlign: 'center', padding: '40px 0' }}>
+                <h1>Iniciar Sesión</h1>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <input 
                         type="email" 
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        style={{ width: '100%', padding: '8px' }} 
+                        name="email" 
+                        placeholder="Correo" 
+                        onChange={handleChange} 
                         required 
+                        className="input-form" 
                     />
-                </div>
-                <div style={{ marginBottom: '15px' }}>
-                    <label>Contraseña:</label>
                     <input 
                         type="password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: '100%', padding: '8px' }} 
+                        name="password" 
+                        placeholder="Clave" 
+                        onChange={handleChange} 
                         required 
+                        className="input-form" 
                     />
-                </div>
-                <button type="submit" className="btn" style={{ width: '100%' }}>Ingresar</button>
-            </form>
-
-            {error && (
-                <p style={{ color: 'red', textAlign: 'center', marginTop: '10px' }}>
-                    Credenciales incorrectas.
-                </p>
-            )}
+                    {error && <p style={{ color: 'red' }}>{error}</p>}
+                    <button type="submit" className="btn">Entrar</button>
+                </form>
+            </div>
         </div>
     );
 }
