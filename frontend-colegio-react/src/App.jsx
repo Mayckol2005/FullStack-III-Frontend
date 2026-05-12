@@ -2,18 +2,27 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Usuarios from './pages/Usuarios';
 import Home from './pages/Home';
+import Estudiantes from './pages/Estudiantes'; // <-- ¡IMPORTANTE! Importamos la vista
 
-// Componente para proteger rutas de administrador
+// Seguridad estricta solo para ADMIN
 const RutaAdmin = ({ children }) => {
     const token = localStorage.getItem('token_colegio');
     const rol = localStorage.getItem('usuario_rol');
-
     if (!token) return <Navigate to="/login" />;
-    if (rol !== 'ADMINISTRADOR') return <Navigate to="/home" />; // Si no es admin, lo manda a la home
+    if (rol !== 'ADMINISTRADOR') return <Navigate to="/home" />; 
     return children;
 };
 
-// Componente para proteger la Home (cualquier usuario logueado)
+// Seguridad para ADMIN y PROFESOR (Ambos pueden ver alumnos)
+const RutaAdminOProfesor = ({ children }) => {
+    const token = localStorage.getItem('token_colegio');
+    const rol = localStorage.getItem('usuario_rol');
+    if (!token) return <Navigate to="/login" />;
+    if (rol !== 'ADMINISTRADOR' && rol !== 'PROFESOR') return <Navigate to="/home" />; 
+    return children;
+};
+
+// Seguridad básica: debe estar logueado
 const RutaPrivada = ({ children }) => {
     const token = localStorage.getItem('token_colegio');
     if (!token) return <Navigate to="/login" />;
@@ -26,19 +35,12 @@ function App() {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 
-                {/* Página principal para TODOS los que inicien sesión */}
-                <Route path="/home" element={
-                    <RutaPrivada>
-                        <Home />
-                    </RutaPrivada>
-                } />
+                <Route path="/home" element={ <RutaPrivada><Home /></RutaPrivada> } />
 
-                {/* Solo accesible por el ADMINISTRADOR */}
-                <Route path="/usuarios" element={
-                    <RutaAdmin>
-                        <Usuarios />
-                    </RutaAdmin>
-                } />
+                <Route path="/usuarios" element={ <RutaAdmin><Usuarios /></RutaAdmin> } />
+                
+                {/* LA RUTA QUE FALTABA */}
+                <Route path="/estudiantes" element={ <RutaAdminOProfesor><Estudiantes /></RutaAdminOProfesor> } />
                 
                 <Route path="/" element={<Navigate to="/login" />} />
             </Routes>
