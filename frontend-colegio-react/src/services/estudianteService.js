@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8090/api/estudiantes'; 
+const API_URL = 'http://localhost:8080/api/estudiantes'; 
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token_colegio');
@@ -33,7 +33,6 @@ export const crearEstudiante = async (estudiante) => {
     }
 };
 
-// --- RESTAURADO: ACTUALIZAR ---
 export const actualizarEstudianteBD = async (id, estudiante) => {
     try {
         const respuesta = await fetch(`${API_URL}/${id}`, {
@@ -48,7 +47,6 @@ export const actualizarEstudianteBD = async (id, estudiante) => {
     }
 };
 
-// --- RESTAURADO: ELIMINAR ---
 export const eliminarEstudianteBD = async (id) => {
     try {
         const respuesta = await fetch(`${API_URL}/${id}`, {

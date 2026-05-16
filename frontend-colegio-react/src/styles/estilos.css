@@ -1,144 +1,193 @@
-/* css/estilos.css */
+/* Variables de Diseño Basadas en tu Logo */
+:root {
+  --color-primario: #0f599f;       /* Azul exacto del logo */
+  --color-primario-hover: #0b4378; /* Azul más oscuro para estados activos */
+  --color-secundario: #f17022;     /* Naranja complementario del logo */
+  --color-exito: #10b981;          /* Verde para guardar/presente */
+  --color-peligro: #ef4444;        /* Rojo para alertas/ausencias */
+  --color-fondo: #f8fafc;          /* Fondo suave gris slate */
+  --color-superficie: #ffffff;     /* Blanco para tarjetas y tablas */
+  --color-texto-principal: #1e293b;
+  --color-texto-secundario: #64748b;
+  --color-borde: #e2e8f0;
+  --fuente-sistema: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Reset Base */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    margin: 0;
-    padding: 20px;
-    color: #333;
+  margin: 0;
+  background-color: var(--color-fondo);
+  color: var(--color-texto-principal);
+  font-family: var(--fuente-sistema);
+  -webkit-font-smoothing: antialiased;
 }
 
-.contenedor {
-    max-width: 900px;
-    margin: auto;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+/* Contenedor Principal Dashboard */
+.dashboard-container {
+  min-height: 100vh;
+  padding: 40px var(--padding-lateral, 30px);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-h1, h2 {
-    color: #0056b3;
+/* Encabezado Estilizado */
+.header-app {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-superficie);
+  padding: 20px 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  margin-bottom: 30px;
+  border: 1px solid var(--color-borde);
 }
 
-/* Estilos para el formulario */
-.formulario-usuario {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 15px;
-    background: #e9ecef;
-    border-radius: 5px;
+.logo-box {
+  background-color: var(--color-superficie);
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.formulario-usuario input, .formulario-usuario select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    flex: 1;
+.logo-box img {
+  height: 55px;
+  width: auto;
 }
 
-.btn {
-    padding: 10px 15px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
+/* Tarjetas / Paneles */
+.card-panel {
+  background-color: var(--color-superficie);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-borde);
+  margin-bottom: 25px;
 }
 
-.btn:hover {
-    background-color: #218838;
+/* Formularios y Selects */
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-texto-principal);
+  font-weight: 600;
+  font-size: 14px;
 }
 
-/* Estilos para la tabla */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+.select-custom, .input-custom {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--color-borde);
+  background-color: #fff;
+  color: var(--color-texto-principal);
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
 }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
+.select-custom:focus, .input-custom:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(15, 89, 159, 0.15);
 }
 
-th {
-    background-color: #0056b3;
-    color: white;
+/* Tablas Modernas */
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-borde);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-tr:nth-child(even) { background-color: #f2f2f2; }
-
-table th.acciones-col {
-    text-align: center;
+.table-custom {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background-color: var(--color-superficie);
 }
 
-.acciones-cell {
-    text-align: center;
-    display: flex;
-    gap: 10px; /* Espacio entre los dos iconos */
-    justify-content: center; /* Centramos el flex internamente */
-    border: none; /* Quitamos bordes internos si los hubiere */
+.table-custom thead tr {
+  background-color: var(--color-primario);
+  color: #ffffff;
 }
 
-.btn-icon {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    font-size: 1.1rem; /* Un tamaño de icono adecuado */
-    color: #777; /* Color gris por defecto */
-    transition: color 0.2s ease; /* Transición suave de color */
+.table-custom th {
+  padding: 16px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* Efectos al pasar el mouse por encima */
-.btn-edit:hover {
-    color: #007bff; /* Color azul al pasar el mouse por editar */
+.table-custom td {
+  padding: 16px 20px;
+  color: var(--color-texto-principal);
+  border-bottom: 1px solid var(--color-borde);
+  font-size: 15px;
 }
 
-.btn-delete:hover {
-    color: #dc3545; /* Color rojo al pasar el mouse por eliminar */
+.table-custom tbody tr:last-child td {
+  border-bottom: none;
 }
 
-.input-inline {
-    width: 100%;
-    padding: 5px;
-    border: 1px solid #0056b3;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    box-sizing: border-box; /* Para que el padding no agrande el ancho */
+.table-custom tbody tr:hover {
+  background-color: #f8fafc;
 }
 
-/* Estilo específico para el select dentro de la tabla */
-select.input-inline {
-    cursor: pointer;
-    background-color: #fff;
+/* Inputs de notas dentro de la tabla */
+.input-nota {
+  width: 65px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-borde);
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-/* Colores para los iconos de confirmación y cancelación */
-.btn-save:hover {
-    color: #28a745 !important; /* Verde éxito */
-    transform: scale(1.2);
+/* Botones */
+.btn-primary {
+  background-color: var(--color-primario);
+  color: #ffffff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.btn-cancel:hover {
-    color: #dc3545 !important; /* Rojo error */
-    transform: scale(1.2);
+.btn-primary:hover {
+  background-color: var(--color-primario-hover);
 }
 
-/* Animación suave para cuando aparecen los inputs */
-@keyframes fadeInInput {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+.btn-success {
+  background-color: var(--color-exito);
+  color: #ffffff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.input-inline {
-    animation: fadeInInput 0.3s ease;
+.btn-success:hover {
+  background-color: #059669;
 }
 
-/* Evitar que la celda de acciones se mueva mucho al cambiar iconos */
-.acciones-cell {
-    min-width: 80px;
+/* Estado Vacío Informativo */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: var(--color-superficie);
+  border-radius: 16px;
+  border: 2px dashed var(--color-borde);
+  color: var(--color-texto-secundario);
+  font-size: 16px;
 }

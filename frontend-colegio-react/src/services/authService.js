@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8090/api/auth';
+// Centralizado al API Gateway
+const API_URL = 'http://localhost:8080/api/auth';
 
 export const iniciarSesion = async (email, password) => {
     try {
@@ -11,7 +12,7 @@ export const iniciarSesion = async (email, password) => {
         if (!respuesta.ok) throw new Error('Credenciales incorrectas');
 
         const datos = await respuesta.json();
-        return datos; // Aquí viene el token
+        return datos; // Retorna { token, rol }
     } catch (error) {
         console.error("Error en authService:", error);
         throw error;
