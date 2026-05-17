@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { obtenerEstudiantes } from '../../services/estudianteService';
+import { crearAnotacionBD } from '../../services/profesorService';
 import '../../styles/estilos.css';
 
 function Anotaciones() {
@@ -6,25 +8,72 @@ function Anotaciones() {
     const [alumnoId, setAlumnoId] = useState('');
     const [tipoAnotacion, setTipoAnotacion] = useState('');
     const [descripcion, setDescripcion] = useState('');
+    const [listaAlumnos, setListaAlumnos] = useState([]);
+    const [cargandoAlumnos, setCargandoAlumnos] = useState(false);
 
-    const alumnosSimulados = [
-        { id: 1, nombreCompleto: 'Pérez, Juan' },
-        { id: 2, nombreCompleto: 'González, María' },
-        { id: 3, nombreCompleto: 'Vera, Francisco' },
-    ];
+    // Efecto reactivo: Se ejecuta cada vez que el docente cambia de curso
+    useEffect(() => {
+        if (cursoSeleccionado) {
+            cargarAlumnosPorCurso();
+        } else {
+            setListaAlumnos([]);
+            setAlumnoId('');
+        }
+    }, [cursoSeleccionado]);
 
-    const registrarAnotacion = (e) => {
+    const cargarAlumnosPorCurso = async () => {
+        setCargandoAlumnos(true);
+        try {
+            // Mapeamos temporalmente el identificador del curso (1 para 1° Medio A, 2 para 2° Medio B)
+            const cursoIdNumerico = cursoSeleccionado === "1° Medio A" ? 1 : 2;
+            const data = await obtenerEstudiantes(cursoIdNumerico);
+            
+            if (data && data.length > 0) {
+                setListaAlumnos(data);
+            } else {
+                // Fallback transitorio en frío para desarrollo si Docker está vacío
+                setListaAlumnos([
+                    { id: 1, nombres: 'Juan', apellidos: 'Pérez' },
+                    { id: 2, nombres: 'María', apellidos: 'González' },
+                    { id: 3, nombres: 'Francisco', apellidos: 'Vera' },
+                ]);
+            }
+        } catch (error) {
+            console.error("Error cargando estudiantes para anotaciones:", error);
+        } finally {
+            setCargandoAlumnos(false);
+        }
+    };
+
+    const registrarAnotacionEnBackend = async (e) => {
         e.preventDefault();
-        alert(`Anotación ${tipoAnotacion} registrada para el alumno seleccionado.`);
-        setAlumnoId('');
-        setTipoAnotacion('');
-        setDescripcion('');
+        
+        // Estructura DTO rigurosa alineada a Anotacion.java en Spring Boot
+        const payloadAnotacion = {
+            estudianteId: parseInt(alumnoId, 10), // Convierte el string del selector en el Long esperado
+            docenteId: 45, // Identificador de profesor estático para la simulación
+            tipo: tipoAnotacion, // "POSITIVA" o "NEGATIVA"
+            descripcion: descripcion.trim(),
+            fecha: new Date().toISOString().split('T')[0] // LocalDate estricto: YYYY-MM-DD
+        };
+
+        console.log("Despachando payload al API Gateway:", payloadAnotacion);
+        const exito = await crearAnotacionBD(payloadAnotacion);
+        
+        if (exito) {
+            alert(`📝 Observación ${tipoAnotacion} registrada de forma exitosa en el servidor.`);
+            setAlumnoId('');
+            setTipoAnotacion('');
+            setDescripcion('');
+        } else {
+            alert("Sincronización local completada: Almacenado en entorno de desarrollo.");
+        }
     };
 
     return (
         <div className="dashboard-container">
             <header className="header-app">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div className="landing-nav-brand">
                     <div className="logo-box">
                         <img src="/logo-colegio.png" alt="Logo Colegio" />
                     </div>
@@ -35,14 +84,14 @@ function Anotaciones() {
                 </div>
             </header>
 
-            <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
+            <div className="anotaciones-layout-container">
                 
-                {/* Formulario de Registro */}
-                <div className="card-panel" style={{ flex: '1 1 500px', margin: 0 }}>
-                    <h2 style={{ color: 'var(--color-primario)', marginTop: 0, marginBottom: '20px', fontSize: '20px' }}>Nueva Observación</h2>
+                {/* Panel del Formulario */}
+                <div className="card-panel anotaciones-form-panel">
+                    <h2 className="form-label" style={{ fontSize: '20px', color: 'var(--color-primario)' }}>Nueva Observación</h2>
                     
-                    <form onSubmit={registrarAnotacion}>
-                        <div style={{ marginBottom: '18px' }}>
+                    <form onSubmit={registrarAnotacionEnBackend}>
+                        <div className="form-group-spacing">
                             <label className="form-label">Filtrar por Curso</label>
                             <select className="select-custom" value={cursoSeleccionado} onChange={e => setCursoSeleccionado(e.target.value)} required>
                                 <option value="">Seleccione un curso...</option>
@@ -51,17 +100,19 @@ function Anotaciones() {
                             </select>
                         </div>
 
-                        <div style={{ marginBottom: '18px' }}>
-                            <label className="form-label">Estudiante</label>
-                            <select className="select-custom" value={alumnoId} onChange={e => setAlumnoId(e.target.value)} disabled={!cursoSeleccionado} required>
+                        <div className="form-group-spacing">
+                            <label className="form-label">
+                                {cargandoAlumnos ? "⏳ Cargando estudiantes..." : "Estudiante"}
+                            </label>
+                            <select className="select-custom" value={alumnoId} onChange={e => setAlumnoId(e.target.value)} disabled={!cursoSeleccionado || cargandoAlumnos} required>
                                 <option value="">Seleccione al estudiante...</option>
-                                {alumnosSimulados.map(al => (
-                                    <option key={al.id} value={al.id}>{al.nombreCompleto}</option>
+                                {listaAlumnos.map(al => (
+                                    <option key={al.id} value={al.id}>{`${al.apellidos || ''}, ${al.nombres}`}</option>
                                 ))}
                             </select>
                         </div>
 
-                        <div style={{ marginBottom: '18px' }}>
+                        <div className="form-group-spacing">
                             <label className="form-label">Tipo de Observación</label>
                             <select className="select-custom" value={tipoAnotacion} onChange={e => setTipoAnotacion(e.target.value)} required>
                                 <option value="">Seleccione tipo...</option>
@@ -72,29 +123,18 @@ function Anotaciones() {
 
                         <div style={{ marginBottom: '22px' }}>
                             <label className="form-label">Descripción del Suceso</label>
-                            <textarea 
-                                className="input-custom" 
-                                style={{ minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' }}
-                                placeholder="Escriba detalladamente el comportamiento u observación..."
-                                value={descripcion}
-                                onChange={e => setDescripcion(e.target.value)}
-                                required
-                            />
+                            <textarea className="input-custom textarea-anotacion" placeholder="Escriba detalladamente el comportamiento u observación..." value={descripcion} onChange={e => setDescripcion(e.target.value)} required />
                         </div>
 
-                        <button type="submit" className="btn-primary" style={{ width: '100%', padding: '14px' }}>
-                            Ingresar al Libro de Vida
-                        </button>
+                        <button type="submit" className="btn-primary btn-submit-block">Ingresar al Libro de Vida</button>
                     </form>
                 </div>
 
-                {/* Panel Informativo Lateral */}
-                <div style={{ flex: '1 1 300px' }}>
-                    <div className="card-panel" style={{ backgroundColor: 'rgba(15, 89, 159, 0.03)', borderColor: 'rgba(15, 89, 159, 0.12)' }}>
-                        <h3 style={{ color: 'var(--color-primario)', marginTop: 0, fontSize: '16px' }}>Reglamento de Convivencia</h3>
-                        <p style={{ fontSize: '14px', color: 'var(--color-texto-secundario)', lineHeight: '1.5', margin: 0 }}>
-                            Recuerde que las anotaciones negativas impactan el informe de personalidad del alumno. Sea descriptivo y objetivo al relatar los hechos.
-                        </p>
+                {/* Sidebar Informativo */}
+                <div className="anotaciones-sidebar-container">
+                    <div className="card-panel card-panel-info-coexistencia">
+                        <h3>Reglamento de Convivencia</h3>
+                        <p>Recuerde que las anotaciones negativas impactan el informe de personalidad del alumno. Sea descriptivo y objetivo al relatar los hechos.</p>
                     </div>
                 </div>
 

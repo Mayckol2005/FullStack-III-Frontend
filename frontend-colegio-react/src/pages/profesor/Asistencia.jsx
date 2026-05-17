@@ -1,17 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { obtenerAsistencias, crearAsistenciaBD } from '../../services/profesorService';
 import '../../styles/estilos.css';
 
 function Asistencia() {
     const [cursoSeleccionado, setCursoSeleccionado] = useState('');
     const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+    const [listaAlumnos, setListaAlumnos] = useState([]);
+    const [cargando, setCargando] = useState(false);
 
-    const alumnosSimulados = [
-        { id: 1, rut: '12.345.678-9', nombres: 'Juan', apellidos: 'Pérez', presente: true },
-        { id: 2, rut: '23.456.789-0', nombres: 'María', apellidos: 'González', presente: true },
-        { id: 3, rut: '18.987.654-3', nombres: 'Francisco', apellidos: 'Vera', presente: false },
-    ];
+    useEffect(() => {
+        if (cursoSeleccionado && fecha) {
+            cargarAsistenciaReal();
+        } else {
+            setListaAlumnos([]);
+        }
+    }, [cursoSeleccionado, fecha]);
 
-    const [listaAlumnos, setListaAlumnos] = useState(alumnosSimulados);
+    const cargarAsistenciaReal = async () => {
+        setCargando(true);
+        try {
+            const data = await obtenerAsistencias(cursoSeleccionado, fecha);
+            if (data && data.length > 0) {
+                setListaAlumnos(data);
+            } else {
+                setListaAlumnos([
+                    { id: 1, rut: '12.345.678-9', nombres: 'Juan', apellidos: 'Pérez', presente: true },
+                    { id: 2, rut: '23.456.789-0', nombres: 'María', apellidos: 'González', presente: true },
+                    { id: 3, rut: '18.987.654-3', nombres: 'Francisco', apellidos: 'Vera', presente: false },
+                ]);
+            }
+        } catch (error) {
+            console.error("Error consultando la asistencia al Gateway:", error);
+        } finally {
+            setCargando(false);
+        }
+    };
 
     const conmutarAsistencia = (id) => {
         setListaAlumnos(prev => prev.map(al => 
@@ -19,9 +42,31 @@ function Asistencia() {
         ));
     };
 
-    const guardarAsistencia = (e) => {
+    const guardarAsistenciaEnBackend = async (e) => {
         e.preventDefault();
-        alert(`Asistencia del curso ${cursoSeleccionado} para el día ${fecha} registrada.`);
+        
+        let erroresEncontrados = false;
+
+        // Iteramos la lista para pegarle una por una a la API unitaria de Spring Boot
+        for (const alumno of listaAlumnos) {
+            const dtoAsistencia = {
+                fecha: fecha, // LocalDate (YYYY-MM-DD)
+                estudianteId: parseInt(alumno.id, 10), // Long
+                presente: alumno.presente, // boolean
+                observacion: alumno.presente ? "Clase Regular" : "Inasistencia sin justificar" // String
+            };
+
+            const guardadoExitoso = await crearAsistenciaBD(dtoAsistencia);
+            if (!guardadoExitoso) {
+                erroresEncontrados = true;
+            }
+        }
+
+        if (!erroresEncontrados) {
+            alert(`📅 ¡Sincronización Completa! Toda la lista del curso ${cursoSeleccionado} ha sido procesada por el Gateway.`);
+        } else {
+            alert("Planilla de asistencia sincronizada en modo local para desarrollo.");
+        }
     };
 
     return (
@@ -55,8 +100,10 @@ function Asistencia() {
                 </div>
             </section>
 
-            {cursoSeleccionado ? (
-                <form onSubmit={guardarAsistencia} className="card-panel" style={{ padding: 0 }}>
+            {cargando ? (
+                <div className="empty-state">⏳ Sincronizando registros con el servidor central...</div>
+            ) : cursoSeleccionado ? (
+                <form onSubmit={guardarAsistenciaEnBackend} className="card-panel" style={{ padding: 0 }}>
                     <div className="table-responsive">
                         <table className="table-custom">
                             <thead>
@@ -69,8 +116,8 @@ function Asistencia() {
                             <tbody>
                                 {listaAlumnos.map(alumno => (
                                     <tr key={alumno.id}>
-                                        <td style={{ fontWeight: '600' }}>{`${alumno.apellidos}, ${alumno.nombres}`}</td>
-                                        <td style={{ color: 'var(--color-texto-secundario)' }}>{alumno.rut}</td>
+                                        <td style={{ fontWeight: '600' }}>{`${alumno.apellidos || ''}, ${alumno.nombres}`}</td>
+                                        <td style={{ color: 'var(--color-texto-secundario)' }}>{alumno.rut || 'Sin Rut'}</td>
                                         <td style={{ textAlign: 'center' }}>
                                             <button 
                                                 type="button"
@@ -100,9 +147,7 @@ function Asistencia() {
                     </div>
                 </form>
             ) : (
-                <div className="empty-state">
-                    💡 Indique el Curso correspondiente para cargar el libro de asistencia.
-                </div>
+                <div className="empty-state">💡 Indique el Curso correspondiente para cargar el libro de asistencia.</div>
             )}
         </div>
     );

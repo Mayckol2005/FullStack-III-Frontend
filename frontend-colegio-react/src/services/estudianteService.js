@@ -8,9 +8,13 @@ const getAuthHeaders = () => {
     };
 };
 
-export const obtenerEstudiantes = async () => {
+// Conectado exactamente con @GetMapping("/curso/{cursoId}") de Java
+export const obtenerEstudiantes = async (cursoId = null) => {
     try {
-        const respuesta = await fetch(API_URL, { headers: getAuthHeaders() });
+        const urlFinal = cursoId ? `${API_URL}/curso/${cursoId}` : API_URL;
+        console.log("type shi - Buscando estudiantes en:", urlFinal);
+        
+        const respuesta = await fetch(urlFinal, { headers: getAuthHeaders() });
         if (!respuesta.ok) return [];
         return await respuesta.json();
     } catch (error) {

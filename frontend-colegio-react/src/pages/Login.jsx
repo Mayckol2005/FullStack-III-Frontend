@@ -1,67 +1,102 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { iniciarSesion } from '../services/authService';
+import { iniciarSesionBD } from '../services/authService';
 import '../styles/estilos.css';
 
 function Login() {
-    const [credenciales, setCredenciales] = useState({ email: '', password: '' });
-    const [error, setError] = useState(null);
+    const [usuario, setUsuario] = useState('');
+    const [password, setPassword] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+    const [cargando, setCargando] = useState(false);
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        setCredenciales({ ...credenciales, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
+    const procesarLogin = async (e) => {
         e.preventDefault();
-        setError(null);
-        try {
-            const data = await iniciarSesion(credenciales.email, credenciales.password);
-            
-            if (data && data.token) {
-                localStorage.setItem('token_colegio', data.token);
-                localStorage.setItem('usuario_rol', data.rol); 
-                
-                // Redirección Inteligente según el Rol del JWT
-                if (data.rol === 'PROFESOR') {
-                    navigate('/profesor');
-                } else {
-                    navigate('/home');
-                }
+        setErrorMsg('');
+        setCargando(true);
+
+        const resultado = await iniciarSesionBD(usuario, password);
+        setCargando(false);
+
+        if (resultado.exito) {
+            // ENRUTAMIENTO DINÁMICO: Redirección según el Rol real que retornó la Base de Datos
+            const rolUsuario = resultado.rol; 
+
+            if (rolUsuario === 'ADMINISTRADOR') {
+                console.log("👑 Modo Administrador Detectado. Derivando...");
+                navigate('/admin');
+            } else if (rolUsuario === 'PROFESOR') {
+                console.log("📝 Modo Docente Detectado. Derivando...");
+                navigate('/profesor');
+            } else if (rolUsuario === 'ALUMNO' || rolUsuario === 'ESTUDIANTE') {
+                console.log("🎒 Modo Estudiante Detectado. Derivando...");
+                navigate('/alumno');
             } else {
-                setError("Credenciales incorrectas");
+                console.warn("⚠️ Rol desconocido detectado:", rolUsuario);
+                navigate('/');
             }
-        } catch (err) {
-            setError("Error al conectar con el servidor o credenciales inválidas");
+        } else {
+            setErrorMsg(resultado.msg || 'Credenciales inválidas');
         }
     };
 
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: 'var(--color-fondo)' }}>
-            <div className="card-panel" style={{ width: '100%', maxWidth: '420px', padding: '40px' }}>
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <img src="/logo-colegio.png" alt="Logo Colegio" style={{ height: '70px', marginBottom: '15px' }} />
-                    <h1 style={{ fontSize: '24px', color: 'var(--color-primario)', margin: 0 }}>Portal Escolar</h1>
-                    <p style={{ color: 'var(--color-texto-secundario)', margin: '5px 0 0 0' }}>Inicia sesión para continuar</p>
+        <div className="landing-wrapper">
+            {/* Nav básica superior de retorno */}
+            <nav className="landing-nav">
+                <div className="landing-nav-brand">
+                    <img src="/logo-colegio.png" alt="Logo CBO" className="nav-logo-brand" style={{ height: '40px' }} />
+                    <span>Colegio Bernardo O'Higgins</span>
                 </div>
+                <button className="btn-primary" onClick={() => navigate('/')}>← Volver al Sitio</button>
+            </nav>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div>
-                        <label className="form-label">Correo Electrónico</label>
-                        <input type="email" name="email" placeholder="ejemplo@colegio.cl" onChange={handleChange} required className="input-custom" />
-                    </div>
-                    <div>
-                        <label className="form-label">Contraseña</label>
-                        <input type="password" name="password" placeholder="••••••••" onChange={handleChange} required className="input-custom" />
-                    </div>
+            <main className="landing-main main-form-wrapper" style={{ maxWidth: '450px', marginTop: '50px' }}>
+                <div className="card-panel">
+                    <h2 className="form-label brand-title-center" style={{ fontSize: '22px', textAlign: 'center', color: 'var(--color-primario)' }}>
+                        Portal Intranet Institucional
+                    </h2>
+                    <p className="subtitle-form-center" style={{ textAlign: 'center', fontSize: '13px', color: 'var(--color-texto-secundario)', marginBottom: '25px' }}>
+                        Ingrese sus credenciales de acceso asignadas
+                    </p>
 
-                    {error && <p style={{ color: 'var(--color-peligro)', margin: 0, fontSize: '14px', fontWeight: '600' }}>⚠️ {error}</p>}
-                    
-                    <button type="submit" className="btn-primary" style={{ padding: '14px', width: '100%', marginTop: '10px' }}>
-                        Ingresar al Sistema
-                    </button>
-                </form>
-            </div>
+                    {errorMsg && (
+                        <div className="card-panel error-alert-panel" style={{ backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'var(--color-peligro)', padding: '12px', color: 'var(--color-peligro)', fontSize: '14px', textAlign: 'center', fontWeight: '500', marginBottom: '15px' }}>
+                            {errorMsg}
+                        </div>
+                    )}
+
+                    <form onSubmit={procesarLogin}>
+                        <div className="form-group-spacing">
+                            <label className="form-label">Nombre de Usuario o Correo</label>
+                            <input 
+                                type="text" 
+                                className="input-custom" 
+                                placeholder="ej: admin@colegio.com" 
+                                value={usuario} 
+                                onChange={e => setUsuario(e.target.value)} 
+                                required 
+                            />
+                        </div>
+
+                        <div className="form-group-spacing">
+                            <label className="form-label">Contraseña</label>
+                            <input 
+                                type="password" 
+                                className="input-custom" 
+                                placeholder="••••••••" 
+                                value={password} 
+                                onChange={e => setPassword(e.target.value)} 
+                                required 
+                            />
+                        </div>
+
+                        <button type="submit" className="btn-primary btn-submit-block" disabled={cargando}>
+                            {cargando ? "⏳ Autenticando en la Red..." : "Ingresar a la Intranet"}
+                        </button>
+                    </form>
+                </div>
+            </main>
         </div>
     );
 }
