@@ -1,27 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerAvisosInstitucionales, obtenerCursosReal, obtenerAnotaciones } from '../../services/profesorService';
+// CORRECCIÓN: Agregamos obtenerAsistencias a las importaciones del servicio de profesor
+import { obtenerAvisosInstitucionales, obtenerCursosReal, obtenerAnotaciones, obtenerAsistencias } from '../../services/profesorService';
 import '../../styles/estilos.css';
 
 function ProfesorDashboard() {
     const [avisos, setAvisos] = useState([]);
     const [cargando, setCargando] = useState(false);
-    const [metricas, setMetricas] = useState({ cursos: 0, anotaciones: 0 });
+    // CORRECCIÓN: Agregamos la propiedad 'asistencia' inicializada como string al estado de métricas
+    const [metricas, setMetricas] = useState({ cursos: 0, asistencia: '0.0%', anotaciones: 0 });
 
     useEffect(() => {
         const cargarDashboard = async () => {
             setCargando(true);
             try {
-                // 1. Cargamos el mural
+                // 1. Cargamos el mural de avisos institucionales
                 const dataAvisos = await obtenerAvisosInstitucionales();
                 setAvisos(dataAvisos || []);
 
-                // 2. Cargamos las métricas dinámicas
-                const listaCursos = await obtenerCursosReal();
-                const listaAnotaciones = await obtenerAnotaciones();
+                // 2. Ejecutamos las llamadas al Backend de forma paralela o secuencial
+                const listaCursos = await obtenerCursosReal() || [];
+                const listaAnotaciones = await obtenerAnotaciones() || [];
+                const listaAsistencias = await obtenerAsistencias() || []; // <-- Traemos el historial maestro real
 
+                // 3. MÁTEMÁTICA DINÁMICA: Procesamos el porcentaje real basado en los registros de la BD
+                let porcentajeCalculado = '0.0%';
+                if (listaAsistencias.length > 0) {
+                    // Filtramos los registros donde presente sea estrictamente true
+                    const totalPresentes = listaAsistencias.filter(a => a.presente === true).length;
+                    porcentajeCalculado = ((totalPresentes / listaAsistencias.length) * 100).toFixed(1) + '%';
+                }
+
+                // 4. Seteamos el estado con datos puramente dinámicos
                 setMetricas({
                     cursos: listaCursos.length,
-                    anotaciones: listaAnotaciones.length
+                    anotaciones: listaAnotaciones.length,
+                    asistencia: porcentajeCalculado // <-- Inyectamos el cálculo en el estado
                 });
 
             } catch(error) {
@@ -56,8 +69,8 @@ function ProfesorDashboard() {
                 </div>
                 <div className="card-panel" style={{ flex: '1', minWidth: '200px', textAlign: 'center' }}>
                     <span style={{ color: 'var(--color-texto-secundario)', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase' }}>Asistencia General</span>
-                    {/* Simulada matemáticamente si no hay endpoints de promedios globales */}
-                    <h2 style={{ fontSize: '42px', color: 'var(--color-exito)', margin: '10px 0 0 0' }}>92.5%</h2>
+                    {/* CORRECCIÓN: Reemplazamos el '92.5%' estático por la propiedad reactiva metricas.asistencia */}
+                    <h2 style={{ fontSize: '42px', color: 'var(--color-exito)', margin: '10px 0 0 0' }}>{metricas.asistencia}</h2>
                 </div>
                 <div className="card-panel" style={{ flex: '1', minWidth: '200px', textAlign: 'center' }}>
                     <span style={{ color: 'var(--color-texto-secundario)', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase' }}>Anotaciones Totales</span>
@@ -66,7 +79,7 @@ function ProfesorDashboard() {
             </div>
 
             <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
-                {/* 📝 Mural de Avisos Real */}
+                {/* 📢 Mural de Avisos Real */}
                 <div className="card-panel" style={{ flex: '2 1 500px', margin: 0 }}>
                     <h3 style={{ color: 'var(--color-primario)', marginTop: 0, marginBottom: '20px', fontSize: '18px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
                         📢 Mural de Novedades Institucionales
