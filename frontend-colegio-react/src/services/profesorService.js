@@ -8,6 +8,17 @@ const getAuthHeaders = () => {
     };
 };
 
+export const obtenerCursosReal = async () => {
+    try {
+        const respuesta = await fetch(`${API_BASE}/academico/cursos`, { headers: getAuthHeaders() });
+        if (!respuesta.ok) return [];
+        return await respuesta.json();
+    } catch (error) {
+        console.error("Error obteniendo cursos reales:", error);
+        return [];
+    }
+};
+
 export const obtenerEvaluaciones = async () => {
     try {
         const respuesta = await fetch(`${API_BASE}/evaluaciones`, { headers: getAuthHeaders() });
@@ -69,7 +80,6 @@ export const crearAsistenciaBD = async (asistencia) => {
     }
 };
 
-// Enviar una calificación individual mapeada al modelo físico de Java
 export const crearEvaluacionBD = async (evaluacion) => {
     try {
         const respuesta = await fetch(`${API_BASE}/evaluaciones`, {
@@ -84,16 +94,9 @@ export const crearEvaluacionBD = async (evaluacion) => {
     }
 };
 
-// Conectado con AvisoController.java -> GET /api/comunicacion/avisos (mapping de gateway)
 export const obtenerAvisosInstitucionales = async () => {
     try {
-        const token = localStorage.getItem('token_colegio');
-        const respuesta = await fetch('http://localhost:8080/api/academico/avisos', { 
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const respuesta = await fetch(`${API_BASE}/comunicaciones`, { headers: getAuthHeaders() });
         if (!respuesta.ok) return [];
         return await respuesta.json();
     } catch (error) {

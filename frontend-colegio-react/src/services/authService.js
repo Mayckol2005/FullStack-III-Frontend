@@ -24,11 +24,9 @@ export const iniciarSesionBD = async (username, password) => {
         if (data && data.token) {
             console.log("🔒 JWT capturado con éxito. Guardando credenciales transaccionales.");
             
-            // Guardamos el token real
             localStorage.setItem('token_colegio', data.token);
-            
-            // 🎯 CAPTURA DINÁMICA: Guardamos el rol real que viene de la BD (ADMINISTRADOR, PROFESOR, etc.)
             localStorage.setItem('usuario_rol', data.rol); 
+            localStorage.setItem('usuario_id', data.id); // Guardamos el ID para futuras referencias
             
             return { exito: true, rol: data.rol };
         }
@@ -47,5 +45,6 @@ export const iniciarSesionBD = async (username, password) => {
 export const cerrarSesion = () => {
     localStorage.removeItem('token_colegio');
     localStorage.removeItem('usuario_rol');
+    localStorage.removeItem('usuario_id');
     window.location.href = '/';
 };
