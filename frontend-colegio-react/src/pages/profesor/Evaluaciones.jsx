@@ -12,211 +12,97 @@ function Evaluaciones() {
     const [listaAlumnos, setListaAlumnos] = useState([]);
     const [cargando, setCargando] = useState(false);
 
-    // 1. Cargar cursos
     useEffect(() => {
-        const cargarCursosIniciales = async () => {
-            const dataCursos = await obtenerCursosReal();
-            setCursos(dataCursos || []);
-        };
-        cargarCursosIniciales();
+        obtenerCursosReal().then(data => setCursos(data || []));
     }, []);
 
-    // 2. Cargar asignaturas y alumnos cuando cambia el curso
     useEffect(() => {
-        if (cursoSeleccionado) {
-            const cargarDatosDelCurso = async () => {
-                const dataAsig = await obtenerAsignaturasPorCursoReal(cursoSeleccionado);
-                setAsignaturas(dataAsig || []);
-
-                setCargando(true);
-                try {
-                    const dataEstudiantes = await obtenerEstudiantes(cursoSeleccionado);
-                    if (dataEstudiantes && dataEstudiantes.length > 0) {
-                        const estudiantesConNotas = dataEstudiantes.map(est => ({
-                            id: est.id,
-                            rut: est.rut || 'Sin RUT',
-                            nombres: est.nombres,
-                            apellidos: est.apellidos,
-                            notas: { n1: '', n2: '', n3: '' } 
-                        }));
-                        setListaAlumnos(estudiantesConNotas);
-                    } else {
-                        setListaAlumnos([]); 
-                    }
-                } catch (error) {
-                    console.error("Error conectando con estudiante-service:", error);
-                    setListaAlumnos([]);
-                } finally {
-                    setCargando(false);
-                }
-            };
-            cargarDatosDelCurso();
-        } else {
-            setAsignaturas([]);
-            setListaAlumnos([]);
-            setAsignaturaSeleccionada('');
-        }
+        if (!cursoSeleccionado) return;
+        const cargarDatos = async () => {
+            setCargando(true);
+            const asig = await obtenerAsignaturasPorCursoReal(cursoSeleccionado);
+            const ests = await obtenerEstudiantes(cursoSeleccionado);
+            setAsignaturas(asig || []);
+            setListaAlumnos(ests?.map(e => ({ ...e, notas: { n1: '', n2: '', n3: '' } })) || []);
+            setCargando(false);
+        };
+        cargarDatos();
     }, [cursoSeleccionado]);
 
-    const manejarCambioNota = (alumnoId, nCampos, valor) => {
-        if (valor !== '' && (parseFloat(valor) < 1.0 || parseFloat(valor) > 7.0)) return;
-        setListaAlumnos(prev => prev.map(alumno => {
-            if (alumno.id === alumnoId) {
-                return { ...alumno, notas: { ...alumno.notas, [nCampos]: valor } };
-            }
-            return alumno;
-        }));
+    const manejarCambioNota = (id, campo, val) => {
+        setListaAlumnos(prev => prev.map(a => a.id === id ? { ...a, notas: { ...a.notas, [campo]: val } } : a));
     };
 
-    const guardarNotasEnBackend = async (e) => {
-        e.preventDefault();
-        if (!asignaturaSeleccionada) {
-            alert("Por favor seleccione una asignatura.");
-            return;
-        }
-
-        let erroresEncontrados = false;
-
-        for (const alumno of listaAlumnos) {
-            const arrayNotas = [alumno.notas.n1, alumno.notas.n2, alumno.notas.n3];
-
-            for (const notaTexto of arrayNotas) {
-                if (notaTexto !== '' && notaTexto !== undefined) {
-                    const dtoEvaluacion = {
-                        estudianteId: parseInt(alumno.id, 10),
-                        asignatura: asignaturaSeleccionada, 
-                        nota: parseFloat(notaTexto)
-                    };
-                    const exito = await crearEvaluacionBD(dtoEvaluacion);
-                    if (!exito) erroresEncontrados = true;
-                }
-            }
-        }
-
-        if (!erroresEncontrados) {
-            alert(`🚀 ¡Sincronización Transaccional Exitosa! Calificaciones procesadas mediante el API Gateway.`);
-        } else {
-            alert("⚠️ Ocurrieron errores al intentar guardar algunas calificaciones.");
-        }
-    };
+    const promedioGeneral = listaAlumnos.length > 0 
+        ? (listaAlumnos.reduce((acc, a) => {
+            const notes = [a.notas.n1, a.notas.n2, a.notas.n3].filter(n => n).map(Number);
+            return acc + (notes.length ? notes.reduce((s, n) => s + n, 0) / notes.length : 0);
+        }, 0) / listaAlumnos.length).toFixed(1)
+        : '-';
 
     return (
         <div className="dashboard-container">
-            <header className="header-app">
-                <div className="landing-nav-brand">
-                    <div className="logo-box">
-                        <img src="/logo-colegio.png" alt="Logo Colegio" />
-                    </div>
-                    <div>
-                        <h1 className="form-label" style={{ margin: 0, fontSize: '26px', color: 'var(--color-primario)' }}>Registro de Calificaciones</h1>
-                        <p style={{ margin: '4px 0 0 0', color: 'var(--color-texto-secundario)' }}>Libro de clases digital - Módulo Docente</p>
-                    </div>
+            <header className="docente-banner">
+                <div className="docente-banner-info">
+                    <h2>Registro de Calificaciones</h2>
+                    <p>Libro de clases digital</p>
+                </div>
+                <div className="docente-banner-meta">
+                    <div className="periodo">Promedio del Curso</div>
+                    <div className="institucion" style={{ fontSize: '24px', fontWeight: 'bold' }}>{promedioGeneral}</div>
                 </div>
             </header>
 
             <section className="card-panel">
                 <div className="evaluaciones-filter-grid">
-                    <div className="evaluaciones-filter-item">
+                    <div>
                         <label className="form-label">Curso</label>
                         <select className="select-custom" value={cursoSeleccionado} onChange={e => setCursoSeleccionado(e.target.value)}>
-                            <option value="">Seleccione un curso...</option>
-                            {cursos.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre || `${c.grado} ${c.letra}`}</option>
-                            ))}
+                            <option value="">Seleccione curso...</option>
+                            {cursos.map(c => <option key={c.id} value={c.id}>{c.nombre || `${c.grado} ${c.letra}`}</option>)}
                         </select>
                     </div>
-                    <div className="evaluaciones-filter-item">
+                    <div>
                         <label className="form-label">Asignatura</label>
-                        <select className="select-custom" value={asignaturaSeleccionada} onChange={e => setAsignaturaSeleccionada(e.target.value)} disabled={!cursoSeleccionado || asignaturas.length === 0}>
-                            <option value="">{asignaturas.length === 0 ? "No hay asignaturas..." : "Seleccione una asignatura..."}</option>
-                            {asignaturas.map(a => (
-                                <option key={a.id} value={a.nombre}>{a.nombre}</option>
-                            ))}
+                        <select className="select-custom" value={asignaturaSeleccionada} onChange={e => setAsignaturaSeleccionada(e.target.value)}>
+                            <option value="">Seleccione asignatura...</option>
+                            {asignaturas.map(a => <option key={a.id} value={a.nombre}>{a.nombre}</option>)}
                         </select>
                     </div>
                 </div>
             </section>
 
-            {cargando ? (
-                <div className="empty-state">⏳ Sincronizando datos transaccionales con el API Gateway...</div>
-            ) : cursoSeleccionado && asignaturaSeleccionada && listaAlumnos.length > 0 ? (
-                /* CORRECCIÓN DE UX: Se eliminó el padding: 0 para que no choque y se le dio estructura limpia */
-                <form onSubmit={guardarNotasEnBackend} className="card-panel" style={{ padding: '0px', overflow: 'hidden' }}>
+            {cargando ? <div className="empty-state">⏳ Cargando...</div> : 
+             cursoSeleccionado && listaAlumnos.length > 0 ? (
+                <form className="card-panel" style={{ padding: 0 }}>
                     <div className="table-responsive">
                         <table className="table-custom">
                             <thead>
-                                <tr>
-                                    <th>Estudiante</th>
-                                    <th>RUT</th>
-                                    <th style={{ textAlign: 'center' }}>Nota 1</th>
-                                    <th style={{ textAlign: 'center' }}>Nota 2</th>
-                                    <th style={{ textAlign: 'center' }}>Nota 3</th>
-                                    <th style={{ textAlign: 'center' }}>Promedio</th>
-                                </tr>
+                                <tr><th>Estudiante</th><th>RUT</th><th>N1</th><th>N2</th><th>N3</th><th>Promedio</th></tr>
                             </thead>
                             <tbody>
-                                {listaAlumnos.map(alumno => {
-                                    const notasValidas = [alumno.notas.n1, alumno.notas.n2, alumno.notas.n3].map(Number).filter(n => n > 0);
-                                    const promedio = notasValidas.length > 0 ? (notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length).toFixed(1) : '-.-';
-                                    
-                                    const claseColorPromedio = promedio === '-.-' 
-                                        ? 'nota-vacia' 
-                                        : parseFloat(promedio) >= 4.0 
-                                            ? 'nota-aprobada' 
-                                            : 'nota-reprobada';
-
+                                {listaAlumnos.map(a => {
+                                    const notes = [a.notas.n1, a.notas.n2, a.notas.n3].filter(n => n).map(Number);
+                                    const prom = notes.length ? (notes.reduce((s, n) => s + n, 0) / notes.length).toFixed(1) : '-';
                                     return (
-                                        <tr key={alumno.id}>
-                                            <td style={{ fontWeight: '600' }}>{`${alumno.apellidos || ''}, ${alumno.nombres}`}</td>
-                                            <td style={{ color: 'var(--color-texto-secundario)' }}>{alumno.rut || 'Sin RUT'}</td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <input type="number" step="0.1" min="1.0" max="7.0" className="input-nota" value={alumno.notas.n1} onChange={e => manejarCambioNota(alumno.id, 'n1', e.target.value)} />
-                                            </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <input type="number" step="0.1" min="1.0" max="7.0" className="input-nota" value={alumno.notas.n2} onChange={e => manejarCambioNota(alumno.id, 'n2', e.target.value)} />
-                                            </td>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <input type="number" step="0.1" min="1.0" max="7.0" className="input-nota" value={alumno.notas.n3} onChange={e => manejarCambioNota(alumno.id, 'n3', e.target.value)} />
-                                            </td>
-                                            <td style={{ textAlign: 'center' }} className={claseColorPromedio}>{promedio}</td>
+                                        <tr key={a.id}>
+                                            <td>{a.apellidos}, {a.nombres}</td>
+                                            <td>{a.rut}</td>
+                                            {['n1','n2','n3'].map(n => (
+                                                <td key={n}><input type="number" className="input-nota" value={a.notas[n]} onChange={e => manejarCambioNota(a.id, n, e.target.value)} /></td>
+                                            ))}
+                                            <td className={prom >= 4 ? 'nota-aprobada' : 'nota-reprobada'}>{prom}</td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
                     </div>
-
-                    {/* CORRECCIÓN: Contenedor tipo footer, idéntico al de Asistencia, empujando el botón azul a la derecha */}
-                    <div style={{ 
-                        padding: '20px 30px', 
-                        display: 'flex', 
-                        justifyContent: 'flex-end', 
-                        backgroundColor: '#fafafa', 
-                        borderTop: '1px solid var(--color-borde)' 
-                    }}>
-                        <button 
-                            type="submit" 
-                            className="btn-submit"
-                            style={{ 
-                                width: 'auto', 
-                                padding: '10px 24px',
-                                backgroundColor: 'var(--color-primario)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: 'var(--radius-custom)',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Sincronizar Calificaciones
-                        </button>
+                    <div className="footer-actions">
+                        <button type="button" className="btn-submit">Sincronizar Calificaciones</button>
                     </div>
                 </form>
-            ) : cursoSeleccionado && asignaturaSeleccionada && listaAlumnos.length === 0 ? (
-                <div className="empty-state">⚠️ El curso seleccionado no registra estudiantes matriculados.</div>
-            ) : (
-                <div className="empty-state">👋 Por favor, seleccione un Curso y Asignatura para desplegar el listado de alumnos.</div>
-            )}
+            ) : <div className="empty-state">👋 Seleccione curso y asignatura para visualizar el listado.</div>}
         </div>
     );
 }

@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LandingPage from './pages/LandingPage'; 
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -6,41 +7,52 @@ import Usuarios from './pages/admin/Usuarios';
 import Estudiantes from './pages/admin/Estudiantes'; 
 import ProfesorRoutes from './pages/profesor/ProfesorRoutes';
 import RutaProtegida from './components/shared/RutaProtegida';
+import Navbar from './components/shared/Navbar';
+
+function Layout({ children }) {
+    const location = useLocation();
+    const isPublic = location.pathname === '/' || location.pathname === '/login';
+
+    return (
+        <>
+            {!isPublic && <Navbar />}
+            <div className={!isPublic ? "main-content" : ""}>
+                {children}
+            </div>
+        </>
+    );
+}
 
 function App() {
     return (
         <Router>
-            <Routes>
-                {/* 🌐 VISTA GENERAL PÚBLICA */}
-                <Route path="/" element={<LandingPage />} />
-                
-                {/* 🔑 Formulario de Acceso a la Intranet */}
-                <Route path="/login" element={<Login />} />
-                
-                {/* 🔒 Intranet Común (Dashboard Base) */}
-                <Route path="/home" element={ 
-                    <RutaProtegida><Home /></RutaProtegida> 
-                } />
+            <Layout>
+                <Routes>
+                    {/* 🌐 VISTA GENERAL PÚBLICA */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<Login />} />
+                    
+                    {/* 🔒 Intranet Común */}
+                    <Route path="/home" element={ 
+                        <RutaProtegida><Home /></RutaProtegida> 
+                    } />
 
-                {/* 🎛️ INTRANET VISTA ADMIN (Mayckol) */}
-                <Route path="/admin" element={ 
-                    <RutaProtegida rolRequerido="ADMINISTRADOR"><Home /></RutaProtegida> 
-                } />
-                <Route path="/usuarios" element={ 
-                    <RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida> 
-                } />
-                <Route path="/estudiantes" element={ 
-                    <RutaProtegida rolRequerido="ADMINISTRADOR"><Estudiantes /></RutaProtegida> 
-                } />
-                
-                {/* 👨‍🏫 INTRANET VISTA PROFESOR (Francisco) */}
-                <Route path="/profesor/*" element={ 
-                    <RutaProtegida rolRequerido="PROFESOR"><ProfesorRoutes /></RutaProtegida> 
-                } />
+                    {/* 🎛️ VISTA ADMIN */}
+                    <Route path="/usuarios" element={ 
+                        <RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida> 
+                    } />
+                    <Route path="/estudiantes" element={ 
+                        <RutaProtegida rolRequerido="ADMINISTRADOR"><Estudiantes /></RutaProtegida> 
+                    } />
+                    
+                    {/* 👨‍🏫 VISTA PROFESOR */}
+                    <Route path="/profesor/*" element={ 
+                        <RutaProtegida rolRequerido="PROFESOR"><ProfesorRoutes /></RutaProtegida> 
+                    } />
 
-                {/* Fallback de redirección */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+            </Layout>
         </Router>
     );
 }

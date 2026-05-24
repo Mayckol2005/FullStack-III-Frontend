@@ -19,14 +19,20 @@ export const iniciarSesionBD = async (username, password) => {
             return { exito: false, msg: 'Credenciales inválidas en el servidor' };
         }
 
-        const data = await respuesta.json(); // Recibe TokenDto { token: "...", rol: "..." }
+        const data = await respuesta.json(); 
+        
+        // LOG DE DEPURACIÓN IMPORTANTE
+        console.log("DEBUG: Datos recibidos del servidor:", data);
 
         if (data && data.token) {
-            console.log("🔒 JWT capturado con éxito. Guardando credenciales transaccionales.");
+            console.log("🔒 JWT capturado con éxito.");
             
             localStorage.setItem('token_colegio', data.token);
             localStorage.setItem('usuario_rol', data.rol); 
-            localStorage.setItem('usuario_id', data.id); // Guardamos el ID para futuras referencias
+            localStorage.setItem('usuario_id', data.id);
+            
+            // Si data.nombre es undefined, aquí se guardará como la cadena "undefined"
+            localStorage.setItem('usuario_nombre', data.nombre); 
             
             return { exito: true, rol: data.rol };
         }
@@ -46,5 +52,6 @@ export const cerrarSesion = () => {
     localStorage.removeItem('token_colegio');
     localStorage.removeItem('usuario_rol');
     localStorage.removeItem('usuario_id');
+    localStorage.removeItem('usuario_nombre');
     window.location.href = '/';
 };

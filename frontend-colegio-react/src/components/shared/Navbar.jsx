@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../../styles/estilos.css';
 
 function Navbar() {
     const navigate = useNavigate();
+    const [busqueda, setBusqueda] = useState('');
     const rol = localStorage.getItem('usuario_rol');
 
     const handleCerrarSesion = () => {
@@ -11,38 +13,46 @@ function Navbar() {
     };
 
     return (
-        <nav style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: '15px 40px', 
-            backgroundColor: 'var(--color-superficie)', 
-            borderBottom: '1px solid var(--color-borde)',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-        }}>
-            <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                <Link to="/home" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+        <nav className="navbar-container">
+            <div className="nav-links">
+                <Link to="/home" className="nav-brand">
                     <img src="/logo-colegio.png" alt="Logo" style={{ height: '35px' }} />
-                    <span style={{ color: 'var(--color-primario)', fontWeight: 'bold', fontSize: '18px' }}>SISTEMA ESCOLAR</span>
+                    <span>SISTEMA ESCOLAR</span>
                 </Link>
                 
-                {/* Enlaces Condicionales Limpios */}
-                {(rol === 'ADMINISTRADOR' || rol === 'PROFESOR') && (
-                    <Link to="/estudiantes" style={{ color: 'var(--color-texto-principal)', textDecoration: 'none', fontWeight: '500' }}>Estudiantes</Link>
-                )}
-                
-                {rol === 'ADMINISTRADOR' && (
-                    <Link to="/usuarios" style={{ color: 'var(--color-texto-principal)', textDecoration: 'none', fontWeight: '500' }}>Usuarios</Link>
+                {/* Links del Profesor */}
+                {rol === 'PROFESOR' && (
+                    <>
+                        <Link to="/profesor/evaluaciones" className="nav-link">📊 Calificaciones</Link>
+                        <Link to="/profesor/asistencia" className="nav-link">📅 Asistencia</Link>
+                        <Link to="/profesor/anotaciones" className="nav-link">📝 Hoja de Vida</Link>
+                    </>
                 )}
 
-                {rol === 'PROFESOR' && (
-                    <Link to="/profesor" style={{ color: 'var(--color-texto-principal)', textDecoration: 'none', fontWeight: '500' }}>👨‍🏫 Mi Aula</Link>
+                {/* Links de Admin */}
+                {rol === 'ADMINISTRADOR' && (
+                    <>
+                        <Link to="/estudiantes" className="nav-link">Estudiantes</Link>
+                        <Link to="/usuarios" className="nav-link">Usuarios</Link>
+                    </>
                 )}
             </div>
 
-            <button onClick={handleCerrarSesion} className="btn-primary" style={{ backgroundColor: 'var(--color-peligro)', padding: '8px 16px' }}>
-                Cerrar Sesión
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                <form className="search-bar-container" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                    <span>🔍</span>
+                    <input 
+                        type="text" 
+                        placeholder="Buscador en desarrollo..." 
+                        className="search-input" 
+                        disabled 
+                    />
+                </form>
+
+                <button onClick={handleCerrarSesion} className="btn-primary" style={{ backgroundColor: 'var(--color-peligro)', padding: '8px 16px' }}>
+                    Cerrar Sesión
+                </button>
+            </div>
         </nav>
     );
 }
