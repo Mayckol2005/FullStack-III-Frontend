@@ -1,19 +1,36 @@
-const API_URL = 'http://localhost:8090/api/auth';
+import apiClient from '../api/apiClient';
+import { saveToken, saveUserRole, removeToken } from '../utils/storage';
 
-export const iniciarSesion = async (email, password) => {
+export const login = async (username, password) => {
     try {
-        const respuesta = await fetch(`${API_URL}/login`, {
+        const respuesta = await apiClient('/auth/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email: username, password })
         });
-
-        if (!respuesta.ok) throw new Error('Credenciales incorrectas');
-
-        const datos = await respuesta.json();
-        return datos; // Aquí viene el token
+        
+        if (respuesta && respuesta.token) {
+            saveToken(respuesta.token);
+            saveUserRole(respuesta.rol || 'ESTUDIANTE');
+            return { 
+                exito: true, 
+                rol: respuesta.rol,
+                token: respuesta.token
+            };
+        }
+        
+        return { 
+            exito: false, 
+            msg: respuesta?.msg || 'Credenciales inválidas' 
+        };
     } catch (error) {
-        console.error("Error en authService:", error);
-        throw error;
+        const mensajeError = error.message || 'Error de conexión con el servidor';
+        return { 
+            exito: false, 
+            msg: mensajeError 
+        };
     }
+};
+
+export const cerrarSesion = () => {
+    removeToken();
 };

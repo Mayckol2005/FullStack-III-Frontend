@@ -1,0 +1,65 @@
+const API_URL = 'http://localhost:8080/api/estudiantes'; 
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token_colegio');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
+};
+
+// Conectado exactamente con @GetMapping("/curso/{cursoId}") de Java
+export const obtenerEstudiantes = async (cursoId = null) => {
+    try {
+        const urlFinal = cursoId ? `${API_URL}/curso/${cursoId}` : API_URL;
+        console.log("📡 [EstudianteService] Buscando nómina en:", urlFinal);
+        
+        const respuesta = await fetch(urlFinal, { headers: getAuthHeaders() });
+        if (!respuesta.ok) return [];
+        return await respuesta.json();
+    } catch (error) {
+        console.error("❌ Error obteniendo estudiantes:", error);
+        return [];
+    }
+};
+
+export const crearEstudiante = async (estudiante) => {
+    try {
+        const respuesta = await fetch(API_URL, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(estudiante)
+        });
+        return respuesta.ok;
+    } catch (error) {
+        console.error("❌ Error creando estudiante:", error);
+        return false;
+    }
+};
+
+export const actualizarEstudianteBD = async (id, estudiante) => {
+    try {
+        const respuesta = await fetch(`${API_URL}/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(estudiante)
+        });
+        return respuesta.ok;
+    } catch (error) {
+        console.error("❌ Error actualizando estudiante:", error);
+        return false;
+    }
+};
+
+export const eliminarEstudianteBD = async (id) => {
+    try {
+        const respuesta = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        return respuesta.ok;
+    } catch (error) {
+        console.error("❌ Error eliminando estudiante:", error);
+        return false;
+    }
+};
