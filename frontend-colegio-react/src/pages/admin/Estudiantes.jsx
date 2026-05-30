@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { obtenerEstudiantes, crearEstudiante, actualizarEstudianteBD, eliminarEstudianteBD } from '../../services/estudianteService';
-import Navbar from '../../components/shared/Navbar';
-import '../../styles/estilos.css';
+import Navbar from '../../components/layout/Navbar';
+import '../../styles/globals.css';
 
 function Estudiantes() {
     const [estudiantes, setEstudiantes] = useState([]);
@@ -44,7 +44,6 @@ function Estudiantes() {
 
     return (
         <div>
-            <Navbar />
             <div className="dashboard-container" style={{ paddingTop: '10px' }}>
                 <div className="header-app">
                     <div>

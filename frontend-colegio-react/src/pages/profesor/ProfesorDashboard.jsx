@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerAvisosInstitucionales } from '../../services/profesorService';
-import '../../styles/estilos.css';
+import '../../styles/globals.css'
 
 function ProfesorDashboard() {
     const navigate = useNavigate();

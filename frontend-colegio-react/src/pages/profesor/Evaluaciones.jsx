@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { crearEvaluacionBD, obtenerCursosReal } from '../../services/profesorService';
 import { obtenerEstudiantes } from '../../services/estudianteService';
 import { obtenerAsignaturasPorCursoReal } from '../../services/academicoService';
-import '../../styles/estilos.css';
+import '../../styles/globals.css'
 
 function Evaluaciones() {
     const [cursos, setCursos] = useState([]);

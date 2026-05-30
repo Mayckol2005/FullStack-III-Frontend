@@ -18,7 +18,7 @@ export const obtenerUsuarios = async () => {
 
 export const crearUsuario = async (usuario) => {
     try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(`${API_URL}/crear`, {
             method: 'POST',
             headers: obtenerCabeceras(),
             body: JSON.stringify(usuario)

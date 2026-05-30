@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerAsistencias, crearAsistenciaBD, obtenerCursosReal } from '../../services/profesorService';
 import { obtenerEstudiantes } from '../../services/estudianteService';
-import '../../styles/estilos.css';
+import '../../styles/globals.css';
 
 function Asistencia() {
     const [cursos, setCursos] = useState([]);

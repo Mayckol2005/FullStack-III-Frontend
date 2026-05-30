@@ -4,7 +4,7 @@ import ProfesorDashboard from './ProfesorDashboard';
 import Asistencia from './Asistencia';
 import Evaluaciones from './Evaluaciones';
 import Anotaciones from './Anotaciones';
-import '../../styles/estilos.css';
+import '../../styles/globals.css'
 
 function ProfesorRoutes() {
     return (

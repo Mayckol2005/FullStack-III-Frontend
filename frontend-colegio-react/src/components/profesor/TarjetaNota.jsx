@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../styles/estilos.css';
+import '../../styles/globals.css';
 
 function TarjetaNota({ titulo, valor, color }) {
     return (

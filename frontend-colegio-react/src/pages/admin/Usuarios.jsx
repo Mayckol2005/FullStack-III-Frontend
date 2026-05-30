@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obtenerUsuarios, crearUsuario, actualizarUsuarioBD, eliminarUsuarioBD } from '../../services/usuarioService';
-import Navbar from '../../components/shared/Navbar';
-import '../../styles/estilos.css';
+import Navbar from '../../components/layout/Navbar';
+import '../../styles/globals.css'
 
 function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
@@ -41,7 +41,6 @@ function Usuarios() {
 
     return (
         <div>
-            <Navbar />
             <div className="dashboard-container" style={{ paddingTop: '10px' }}>
                 <div className="header-app">
                     <div>

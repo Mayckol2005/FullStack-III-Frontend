@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerEstudiantes } from '../../services/estudianteService';
 import { crearAnotacionBD, obtenerCursosReal } from '../../services/profesorService'; 
-import '../../styles/estilos.css';
+import '../../styles/globals.css';
 
 function Anotaciones() {
     const [cursos, setCursos] = useState([]);

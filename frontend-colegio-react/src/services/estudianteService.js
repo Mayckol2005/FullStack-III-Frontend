@@ -12,13 +12,13 @@ const getAuthHeaders = () => {
 export const obtenerEstudiantes = async (cursoId = null) => {
     try {
         const urlFinal = cursoId ? `${API_URL}/curso/${cursoId}` : API_URL;
-        console.log("type shi - Buscando estudiantes en:", urlFinal);
+        console.log("📡 [EstudianteService] Buscando nómina en:", urlFinal);
         
         const respuesta = await fetch(urlFinal, { headers: getAuthHeaders() });
         if (!respuesta.ok) return [];
         return await respuesta.json();
     } catch (error) {
-        console.error("Error obteniendo estudiantes:", error);
+        console.error("❌ Error obteniendo estudiantes:", error);
         return [];
     }
 };
@@ -32,7 +32,7 @@ export const crearEstudiante = async (estudiante) => {
         });
         return respuesta.ok;
     } catch (error) {
-        console.error("Error creando estudiante:", error);
+        console.error("❌ Error creando estudiante:", error);
         return false;
     }
 };
@@ -46,7 +46,7 @@ export const actualizarEstudianteBD = async (id, estudiante) => {
         });
         return respuesta.ok;
     } catch (error) {
-        console.error("Error actualizando estudiante:", error);
+        console.error("❌ Error actualizando estudiante:", error);
         return false;
     }
 };
@@ -59,7 +59,7 @@ export const eliminarEstudianteBD = async (id) => {
         });
         return respuesta.ok;
     } catch (error) {
-        console.error("Error eliminando estudiante:", error);
+        console.error("❌ Error eliminando estudiante:", error);
         return false;
     }
 };
