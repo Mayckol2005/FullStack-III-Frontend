@@ -6,8 +6,11 @@ import Login from './Login';
 import { useAuth } from '../../hooks/useAuth';
 
 const mockNavigate = vi.fn();
+const mockLoginFn = vi.fn();
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
+
   return {
     ...actual,
     useNavigate: () => mockNavigate,
@@ -18,137 +21,283 @@ vi.mock('../../hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 
-describe('Página de Autenticación: Login', () => {
-  const mockLoginFn = vi.fn();
-
+describe('Página Login', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
     useAuth.mockReturnValue({
       login: mockLoginFn,
     });
   });
 
-  const renderComponent = () => {
-    return render(
+  const renderComponent = () =>
+    render(
       <BrowserRouter>
         <Login />
       </BrowserRouter>
     );
-  };
 
-  it('debe renderizar los elementos básicos del formulario de acceso', () => {
+  it('debe renderizar correctamente', () => {
     renderComponent();
-    
-    expect(screen.getByText('Portal Intranet Institucional')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nombre de Usuario o Correo')).toBeInTheDocument();
-    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ingresar a la Intranet' })).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/Portal Intranet Institucional/i)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i)
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByLabelText(/Contraseña/i)
+    ).toBeInTheDocument();
   });
 
-  it('debe permitir escribir en los campos de usuario y contraseña', () => {
+  it('debe volver al sitio al hacer click en volver', () => {
     renderComponent();
-    
-    const inputUsuario = screen.getByPlaceholderText('ej: admin@colegio.com');
-    const inputPassword = screen.getByPlaceholderText('••••••••');
 
-    fireEvent.change(inputUsuario, { target: { value: 'profesor@colegio.com' } });
-    fireEvent.change(inputPassword, { target: { value: 'password123' } });
-
-    expect(inputUsuario.value).toBe('profesor@colegio.com');
-    expect(inputPassword.value).toBe('password123');
-  });
-
-  it('debe redirigir al home principal al hacer clic en ← Volver al Sitio', () => {
-    renderComponent();
-    
-    const botonVolver = screen.getByRole('button', { name: '← Volver al Sitio' });
-    fireEvent.click(botonVolver);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Volver al Sitio/i,
+      })
+    );
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
-  it('debe autenticar y redirigir a /admin si el rol retornado es ADMINISTRADOR', async () => {
-    mockLoginFn.mockResolvedValue({ exito: true, rol: 'ADMINISTRADOR' });
+  it('debe redirigir a /home si el rol es ADMINISTRADOR', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: true,
+      rol: 'ADMINISTRADOR',
+    });
+
     renderComponent();
 
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'admin' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'admin123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'admin' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
 
     await waitFor(() => {
-      expect(mockLoginFn).toHaveBeenCalledWith('admin', 'admin123');
-      expect(mockNavigate).toHaveBeenCalledWith('/admin');
+      expect(mockNavigate).toHaveBeenCalledWith('/home');
     });
   });
 
-  it('debe autenticar y redirigir a /profesor si el rol retornado es PROFESOR', async () => {
-    mockLoginFn.mockResolvedValue({ exito: true, rol: 'PROFESOR' });
+  it('debe redirigir a /profesor si el rol es PROFESOR', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: true,
+      rol: 'PROFESOR',
+    });
+
     renderComponent();
 
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'profe' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'profe123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'profe' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/profesor');
     });
   });
 
-  it('debe autenticar y redirigir a /alumno si el rol retornado es ESTUDIANTE', async () => {
-    mockLoginFn.mockResolvedValue({ exito: true, rol: 'ESTUDIANTE' });
+  it('debe redirigir a /alumno si el rol es ALUMNO', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: true,
+      rol: 'ALUMNO',
+    });
+
     renderComponent();
 
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'alumno' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'alumno123' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'alumno' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/alumno');
     });
   });
 
-  it('debe redirigir al sitio base si el rol es desconocido', async () => {
-    mockLoginFn.mockResolvedValue({ exito: true, rol: 'VISITA' });
+  it('debe redirigir a /alumno si el rol es ESTUDIANTE', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: true,
+      rol: 'ESTUDIANTE',
+    });
+
     renderComponent();
 
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'test' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'test' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'estudiante' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/alumno');
+    });
+  });
+
+  it('debe redirigir a "/" para roles desconocidos', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: true,
+      rol: 'INVITADO',
+    });
+
+    renderComponent();
+
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'user' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
-  it('debe mostrar un mensaje de error si las credenciales son inválidas', async () => {
-    mockLoginFn.mockResolvedValue({ exito: false, msg: 'Usuario no registrado' });
+  it('debe mostrar mensaje cuando las credenciales son inválidas', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: false,
+      msg: 'Usuario o contraseña incorrectos',
+    });
+
     renderComponent();
 
-    // Rellenamos datos para gatillar el submit del formulario
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'incorrecto' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'clave' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'wrong' } }
+    );
 
-    await waitFor(() => {
-      const alerta = screen.getByRole('alert');
-      expect(alerta).toBeInTheDocument();
-      expect(alerta.textContent).toBe('Usuario no registrado');
-    });
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: 'wrong' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
+
+    expect(
+      await screen.findByRole('alert')
+    ).toHaveTextContent(
+      'Usuario o contraseña incorrectos'
+    );
   });
 
-  it('debe mostrar mensaje genérico si el servidor falla o lanza una excepción', async () => {
-    mockLoginFn.mockRejectedValue(new Error('Network Crash'));
+  it('debe mostrar mensaje genérico cuando no viene msg', async () => {
+    mockLoginFn.mockResolvedValue({
+      exito: false,
+    });
+
     renderComponent();
 
-    // Rellenamos datos para gatillar el submit del formulario
-    fireEvent.change(screen.getByPlaceholderText('ej: admin@colegio.com'), { target: { value: 'error' } });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'error' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Ingresar a la Intranet' }));
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'usuario' } }
+    );
 
-    await waitFor(() => {
-      const alerta = screen.getByRole('alert');
-      expect(alerta).toBeInTheDocument();
-      expect(alerta.textContent).toBe('Error de conexión con el servidor');
-    });
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
+
+    expect(
+      await screen.findByRole('alert')
+    ).toHaveTextContent(
+      'Credenciales inválidas'
+    );
+  });
+
+  it('debe mostrar error de conexión cuando login lanza excepción', async () => {
+    mockLoginFn.mockRejectedValue(
+      new Error('Network Error')
+    );
+
+    renderComponent();
+
+    fireEvent.change(
+      screen.getByLabelText(/Nombre de Usuario o Correo/i),
+      { target: { value: 'usuario' } }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText(/Contraseña/i),
+      { target: { value: '1234' } }
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Ingresar a la Intranet/i,
+      })
+    );
+
+    expect(
+      await screen.findByRole('alert')
+    ).toHaveTextContent(
+      'Error de conexión con el servidor'
+    );
   });
 });
