@@ -60,18 +60,32 @@ function Login() {
                     </h2>
                     {errorMsg && <div role="alert" style={{ color: 'red', textAlign: 'center', marginBottom: '15px' }}>{errorMsg}</div>}
                     <form onSubmit={procesarLogin}>
-                        <div className="form-group-spacing">
-                            <label className="form-label">Nombre de Usuario o Correo</label>
-                            <input type="text" className="input-custom" value={usuario} onChange={e => setUsuario(e.target.value)} required />
-                        </div>
-                        <div className="form-group-spacing">
-                            <label className="form-label">Contraseña</label>
-                            <input type="password" className="input-custom" value={password} onChange={e => setPassword(e.target.value)} required />
-                        </div>
-                        <button type="submit" className="btn-primary btn-submit-block" disabled={cargando}>
-                            {cargando ? "⏳ Autenticando..." : "Ingresar a la Intranet"}
-                        </button>
-                    </form>
+    <div className="form-group-spacing">
+        <label htmlFor="usuario" className="form-label">Nombre de Usuario o Correo</label>
+        <input 
+            id="usuario" 
+            type="text" 
+            className="input-custom" 
+            value={usuario} 
+            onChange={e => setUsuario(e.target.value)} 
+            required 
+        />
+    </div>
+    <div className="form-group-spacing">
+        <label htmlFor="password" className="form-label">Contraseña</label>
+        <input 
+            id="password" 
+            type="password" 
+            className="input-custom" 
+            value={password} 
+            onChange={e => setPassword(e.target.value)} 
+            required 
+        />
+    </div>
+    <button type="submit" className="btn-primary btn-submit-block" disabled={cargando}>
+        {cargando ? "⏳ Autenticando..." : "Ingresar a la Intranet"}
+    </button>
+</form>
                 </div>
             </main>
         </div>

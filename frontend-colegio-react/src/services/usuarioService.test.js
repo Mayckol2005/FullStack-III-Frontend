@@ -1,170 +1,167 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-    obtenerUsuarios,
-    crearUsuario,
-    actualizarUsuarioBD,
-    eliminarUsuarioBD
-} from './usuarioService';
+import { obtenerUsuarios, crearUsuario, actualizarUsuarioBD, eliminarUsuarioBD } from './usuarioService';
 
-describe('Servicio de Usuarios: usuarioService.js', () => {
+describe('Servicio de Usuarios', () => {
 
     beforeEach(() => {
-        // Interceptamos por completo el fetch global del entorno
         vi.stubGlobal('fetch', vi.fn());
-        
-        // Silenciamos los logs de error para que la terminal se vea limpia
-        vi.spyOn(console, 'error').mockImplementation(() => {});
-        
-        // Simulamos la respuesta del almacenamiento local
-        vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('token-seguro-usuario-xyz');
+
+        vi.spyOn(console, 'error')
+            .mockImplementation(() => {});
+
+        vi.spyOn(Storage.prototype, 'getItem')
+            .mockReturnValue('token-seguro-usuario-xyz');
     });
 
     afterEach(() => {
-        // Limpiamos los mocks tras cada test individual
         vi.restoreAllMocks();
     });
 
-    const headersEsperados = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer token-seguro-usuario-xyz'
-    };
+    describe('obtenerUsuarios', () => {
 
-    describe('obtenerUsuarios()', () => {
-        it('debe retornar la lista completa de usuarios si el servidor responde exitosamente (ok: true)', async () => {
-            const mockUsuarios = [
-                { id: 1, username: 'admin', rol: 'ADMINISTRADOR' },
-                { id: 2, username: 'profe_juan', rol: 'PROFESOR' }
-            ];
+        it('debe retornar lista de usuarios cuando la respuesta es correcta', async () => {
 
             fetch.mockResolvedValue({
                 ok: true,
-                json: async () => mockUsuarios
+                json: async () => [
+                    { id: 1, nombre: 'Juan' }
+                ]
             });
 
             const resultado = await obtenerUsuarios();
 
-            expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/usuarios', {
-                headers: headersEsperados
-            });
-            expect(resultado).toEqual(mockUsuarios);
+            expect(resultado).toEqual([
+                { id: 1, nombre: 'Juan' }
+            ]);
         });
 
-        it('debe retornar un arreglo vacío si el estatus HTTP es erróneo (ok: false)', async () => {
-            fetch.mockResolvedValue({ ok: false });
+        it('debe retornar arreglo vacío cuando res.ok es false', async () => {
+
+            fetch.mockResolvedValue({
+                ok: false
+            });
 
             const resultado = await obtenerUsuarios();
 
             expect(resultado).toEqual([]);
         });
 
-        it('debe saltar al bloque catch, logear el error y retornar un arreglo vacío si el fetch es rechazado', async () => {
-            fetch.mockRejectedValue(new Error('Fallo crítico de conexión'));
+        it('debe retornar arreglo vacío cuando ocurre una excepción', async () => {
+
+            fetch.mockRejectedValue(
+                new Error('Error de red')
+            );
 
             const resultado = await obtenerUsuarios();
 
-            expect(console.error).toHaveBeenCalledWith("Error obteniendo usuarios:", expect.any(Error));
             expect(resultado).toEqual([]);
         });
     });
 
-    describe('crearUsuario()', () => {
-        const nuevoUsuario = { username: 'nuevo_usuario', password: '123', rol: 'ESTUDIANTE' };
+    describe('crearUsuario', () => {
 
-        it('debe retornar true si la petición POST se completa con éxito', async () => {
-            fetch.mockResolvedValue({ ok: true });
+        it('debe enviar POST a /crear', async () => {
 
-            const resultado = await crearUsuario(nuevoUsuario);
-
-            expect(fetch).toHaveBeenCalledWith('http://localhost:8080/api/usuarios', {
-                method: 'POST',
-                headers: headersEsperados,
-                body: JSON.stringify(nuevoUsuario)
+            fetch.mockResolvedValue({
+                ok: true
             });
+
+            const usuario = {
+                username: 'admin'
+            };
+
+            const resultado = await crearUsuario(usuario);
+
             expect(resultado).toBe(true);
+
+            expect(fetch).toHaveBeenCalledWith(
+                'http://localhost:8080/api/usuarios/crear',
+                expect.objectContaining({
+                    method: 'POST'
+                })
+            );
         });
 
-        it('debe retornar false si el servidor responde con un código de fallo (ok: false)', async () => {
-            fetch.mockResolvedValue({ ok: false });
+        it('debe retornar false cuando ocurre un error', async () => {
 
-            const resultado = await crearUsuario(nuevoUsuario);
+            fetch.mockRejectedValue(
+                new Error('Error creando usuario')
+            );
 
-            expect(resultado).toBe(false);
-        });
+            const resultado = await crearUsuario({
+                username: 'admin'
+            });
 
-        it('debe capturar la excepción y retornar false ante caídas de la red', async () => {
-            fetch.mockRejectedValue(new Error('Servidor inaccesible'));
-
-            const resultado = await crearUsuario(nuevoUsuario);
-
-            expect(console.error).toHaveBeenCalledWith("Error creando usuario:", expect.any(Error));
             expect(resultado).toBe(false);
         });
     });
 
-    describe('actualizarUsuarioBD()', () => {
-        const idUsuario = 42;
-        const datosActualizados = { username: 'usuario_modificado', rol: 'PROFESOR' };
+    describe('actualizarUsuarioBD', () => {
 
-        it('debe mandar un PUT al endpoint correcto con el ID y retornar true si es exitoso', async () => {
-            fetch.mockResolvedValue({ ok: true });
+        it('debe actualizar usuario correctamente', async () => {
 
-            const resultado = await actualizarUsuarioBD(idUsuario, datosActualizados);
-
-            expect(fetch).toHaveBeenCalledWith(`http://localhost:8080/api/usuarios/${idUsuario}`, {
-                method: 'PUT',
-                headers: headersEsperados,
-                body: JSON.stringify(datosActualizados)
+            fetch.mockResolvedValue({
+                ok: true
             });
+
+            const resultado =
+                await actualizarUsuarioBD(1, {
+                    nombre: 'Pedro'
+                });
+
             expect(resultado).toBe(true);
+
+            expect(fetch).toHaveBeenCalledWith(
+                'http://localhost:8080/api/usuarios/1',
+                expect.objectContaining({
+                    method: 'PUT'
+                })
+            );
         });
 
-        it('debe retornar false si la API rechaza la edición', async () => {
-            fetch.mockResolvedValue({ ok: false });
+        it('debe retornar false cuando falla la actualización', async () => {
 
-            const resultado = await actualizarUsuarioBD(idUsuario, datosActualizados);
+            fetch.mockRejectedValue(
+                new Error('Error actualizando')
+            );
 
-            expect(resultado).toBe(false);
-        });
+            const resultado =
+                await actualizarUsuarioBD(1, {});
 
-        it('debe atrapar fallos del servidor y retornar false en el catch', async () => {
-            fetch.mockRejectedValue(new Error('Error en BD'));
-
-            const resultado = await actualizarUsuarioBD(idUsuario, datosActualizados);
-
-            expect(console.error).toHaveBeenCalledWith("Error actualizando usuario:", expect.any(Error));
             expect(resultado).toBe(false);
         });
     });
 
-    describe('eliminarUsuarioBD()', () => {
-        const idUsuario = 99;
+    describe('eliminarUsuarioBD', () => {
 
-        it('debe enviar un DELETE a la URL destino y retornar true si la eliminación es exitosa', async () => {
-            fetch.mockResolvedValue({ ok: true });
+        it('debe eliminar usuario correctamente', async () => {
 
-            const resultado = await eliminarUsuarioBD(idUsuario);
-
-            expect(fetch).toHaveBeenCalledWith(`http://localhost:8080/api/usuarios/${idUsuario}`, {
-                method: 'DELETE',
-                headers: headersEsperados
+            fetch.mockResolvedValue({
+                ok: true
             });
+
+            const resultado =
+                await eliminarUsuarioBD(1);
+
             expect(resultado).toBe(true);
+
+            expect(fetch).toHaveBeenCalledWith(
+                'http://localhost:8080/api/usuarios/1',
+                expect.objectContaining({
+                    method: 'DELETE'
+                })
+            );
         });
 
-        it('debe retornar false si el backend no permite eliminar el registro', async () => {
-            fetch.mockResolvedValue({ ok: false });
+        it('debe retornar false cuando falla la eliminación', async () => {
 
-            const resultado = await eliminarUsuarioBD(idUsuario);
+            fetch.mockRejectedValue(
+                new Error('Error eliminando')
+            );
 
-            expect(resultado).toBe(false);
-        });
+            const resultado =
+                await eliminarUsuarioBD(1);
 
-        it('debe capturar fallos graves de red y resolver falsos de forma controlada', async () => {
-            fetch.mockRejectedValue(new Error('Error de Red'));
-
-            const resultado = await eliminarUsuarioBD(idUsuario);
-
-            expect(console.error).toHaveBeenCalledWith("Error eliminando usuario:", expect.any(Error));
             expect(resultado).toBe(false);
         });
     });

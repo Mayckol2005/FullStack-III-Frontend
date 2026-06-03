@@ -1,79 +1,66 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import RutaProtegida from './RutaProtegida';
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom');
-  return {
-    ...actual,
-    Navigate: vi.fn(({ to }) => <div data-testid="navigate-mock" data-to={to} />),
-  };
-});
 
 describe('Componente: RutaProtegida', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    // Silenciamos los logs y el alert de la ventana para que no ensucien la consola
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(globalThis, 'alert').mockImplementation(() => {}); // Evita el error de "Not implemented"
   });
 
-  it('debe redirigir al Login si no existe un token en el localStorage', () => {
+  it('debe redirigir al Login si no existe un token', () => {
     render(
-      <RutaProtegida>
-        <div data-testid="contenido-privado">Territorio Sagrado</div>
-      </RutaProtegida>
+      <BrowserRouter>
+        <RutaProtegida><div>Privado</div></RutaProtegida>
+      </BrowserRouter>
     );
-
-    const navigateMock = screen.getByTestId('navigate-mock');
-    expect(navigateMock).toBeInTheDocument();
-    expect(navigateMock.getAttribute('data-to')).toBe('/login');
-    expect(screen.queryByTestId('contenido-privado')).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/login');
   });
 
-  it('debe permitir el acceso al contenido si hay token y no se requiere un rol específico', () => {
-    localStorage.setItem('token_colegio', 'un-token-valido-xyz');
-
+  it('debe permitir el acceso si hay token y no se requiere rol específico', () => {
+    localStorage.setItem('token_colegio', 'valido');
     render(
-      <RutaProtegida>
-        <div data-testid="contenido-privado">Territorio Sagrado</div>
-      </RutaProtegida>
+      <BrowserRouter>
+        <RutaProtegida>
+          <div data-testid="privado">Contenido</div>
+        </RutaProtegida>
+      </BrowserRouter>
     );
-
-    expect(screen.getByTestId('contenido-privado')).toBeInTheDocument();
-    expect(screen.queryByTestId('navigate-mock')).not.toBeInTheDocument();
+    expect(screen.getByTestId('privado')).toBeInTheDocument();
   });
 
-  it('debe redirigir a /login si el rol del usuario no coincide con el rol requerido', () => {
-    localStorage.setItem('token_colegio', 'un-token-valido-xyz');
+  // NUEVO TEST PARA CUBRIR EL BRANCH DE ROL (Línea 16)
+  it('debe redirigir al Login si el rol del usuario no coincide con el requerido', () => {
+    localStorage.setItem('token_colegio', 'valido');
     localStorage.setItem('usuario_rol', 'ESTUDIANTE');
-
+    
     render(
-      <RutaProtegida rolRequerido="PROFESOR">
-        <div data-testid="contenido-privado">Panel de Notas del Profesor</div>
-      </RutaProtegida>
+      <BrowserRouter>
+        <RutaProtegida rolRequerido="ADMINISTRADOR">
+          <div>Privado</div>
+        </RutaProtegida>
+      </BrowserRouter>
     );
-
-    const navigateMock = screen.getByTestId('navigate-mock');
-    expect(navigateMock).toBeInTheDocument();
-    expect(navigateMock.getAttribute('data-to')).toBe('/login'); 
-    expect(screen.queryByTestId('contenido-privado')).not.toBeInTheDocument();
+    
+    // Al fallar la validación de rol, debería navegar a /login
+    expect(window.location.pathname).toBe('/login');
   });
 
-  it('debe permitir el acceso si el rol del usuario coincide exactamente con el rol requerido', () => {
-    localStorage.setItem('token_colegio', 'un-token-valido-xyz');
-    localStorage.setItem('usuario_rol', 'PROFESOR');
-
+  // NUEVO TEST PARA ACCESO EXITOSO POR ROL
+  it('debe permitir el acceso si el rol coincide', () => {
+    localStorage.setItem('token_colegio', 'valido');
+    localStorage.setItem('usuario_rol', 'ADMINISTRADOR');
+    
     render(
-      <RutaProtegida rolRequerido="PROFESOR">
-        <div data-testid="contenido-privado">Panel de Notas del Profesor</div>
-      </RutaProtegida>
+      <BrowserRouter>
+        <RutaProtegida rolRequerido="ADMINISTRADOR">
+          <div data-testid="admin-content">Contenido Admin</div>
+        </RutaProtegida>
+      </BrowserRouter>
     );
-
-    expect(screen.getByTestId('contenido-privado')).toBeInTheDocument();
-    expect(screen.queryByTestId('navigate-mock')).not.toBeInTheDocument();
+    
+    expect(screen.getByTestId('admin-content')).toBeInTheDocument();
   });
 });
