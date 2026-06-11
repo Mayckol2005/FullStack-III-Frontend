@@ -8,10 +8,14 @@ function Home() {
     const rol = localStorage.getItem('usuario_rol'); 
 
     useEffect(() => {
-        if (rol === 'PROFESOR') {
-            navigate('/profesor');
-        }
-    }, [rol, navigate]);
+    if (rol === 'PROFESOR') {
+        navigate('/profesor');
+    }
+
+    if (rol === 'ALUMNO') {
+        navigate('/alumno');
+    }
+}, [rol, navigate]);
 
     return (
         <div>
@@ -34,9 +38,33 @@ function Home() {
                                 </button>
                             </>
                         )}
-                        <button className="btn-primary" style={{ backgroundColor: '#6c757d', padding: '15px 30px', minWidth: '250px' }}>
-                            👤 Mi Perfil Académico
-                        </button>
+                        {rol === 'ALUMNO' && (
+                            <button
+                                onClick={() => navigate('/alumno')}
+                                className="btn-primary"
+                                style={{
+                                    backgroundColor: 'var(--color-exito)',
+                                    padding: '15px 30px',
+                                    minWidth: '250px'
+                                }}
+                            >
+                                🎓 Portal Alumno
+                            </button>
+                        )}
+
+                        {rol === 'PROFESOR' && (
+                            <button
+                                onClick={() => navigate('/profesor')}
+                                className="btn-primary"
+                                style={{
+                                    backgroundColor: '#6c757d',
+                                    padding: '15px 30px',
+                                    minWidth: '250px'
+                                }}
+                            >
+                                👨‍🏫 Portal Profesor
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

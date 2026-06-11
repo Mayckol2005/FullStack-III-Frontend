@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import ProfesorRoutes from '../pages/profesor/ProfesorRoutes.jsx';
 import Estudiantes from '../pages/admin/Estudiantes.jsx';
 import Usuarios from '../pages/admin/Usuarios.jsx';
+import AlumnoRoutes from "../pages/alumno/AlumnoRoutes";
 
 const AppRoutes = () => {
   const { autenticado, cargando } = useAuth();
@@ -20,6 +21,7 @@ const AppRoutes = () => {
       <Route path="/login" element={!autenticado ? <Login /> : <Navigate to="/home" replace />} />
       <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
       <Route path="/profesor/*" element={<RutaProtegida rolRequerido="PROFESOR"><ProfesorRoutes /></RutaProtegida>} />
+      <Route path="/alumno/*" element={<RutaProtegida rolRequerido="ALUMNO"><AlumnoRoutes /></RutaProtegida>}/>
       <Route path="/admin/estudiantes" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Estudiantes /></RutaProtegida>} />
       <Route path="/admin/usuarios" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida>} />
       <Route path="*" element={<Navigate to="/" replace />} />
