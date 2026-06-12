@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import ProfesorRoutes from '../pages/profesor/ProfesorRoutes.jsx';
 import Estudiantes from '../pages/admin/Estudiantes.jsx';
 import Usuarios from '../pages/admin/Usuarios.jsx';
+import Cursos from '../pages/admin/Cursos.jsx';
 
 const AppRoutes = () => {
   const { autenticado, cargando } = useAuth();
@@ -22,8 +23,11 @@ const AppRoutes = () => {
       <Route path="/profesor/*" element={<RutaProtegida rolRequerido="PROFESOR"><ProfesorRoutes /></RutaProtegida>} />
       <Route path="/admin/estudiantes" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Estudiantes /></RutaProtegida>} />
       <Route path="/admin/usuarios" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/admin/cursos" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Cursos /></RutaProtegida>} />
+      <Route path="/admin/cursos" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Cursos /></RutaProtegida>} />
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
 };
+
 export default AppRoutes;

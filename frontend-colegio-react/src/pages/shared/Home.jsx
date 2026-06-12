@@ -29,6 +29,12 @@ function Home() {
                                 <button onClick={() => navigate('/admin/usuarios')} className="btn-primary" style={{ padding: '15px 30px', minWidth: '250px' }}>
                                     🎛️ Gestión de Usuarios
                                 </button>
+                                
+                                {/* 🏫 FUSIONADO: Botón de Gestión Académica agregado con coherencia de ruta */}
+                                <button onClick={() => navigate('/admin/cursos')} className="btn-primary" style={{ backgroundColor: '#17a2b8', padding: '15px 30px', minWidth: '250px' }}>
+                                    🏫 Gestión Académica
+                                </button>
+
                                 <button onClick={() => navigate('/admin/estudiantes')} className="btn-primary" style={{ backgroundColor: 'var(--color-exito)', padding: '15px 30px', minWidth: '250px' }}>
                                     🎓 Gestión de Estudiantes
                                 </button>
@@ -43,4 +49,5 @@ function Home() {
         </div>
     );
 }
+
 export default Home;

@@ -18,6 +18,43 @@ function Usuarios() {
         setUsuarios(data);
     };
 
+    // 🇨🇱 Función para formatear el RUT dinámicamente en tiempo real (xx.xxx.xxx-x)
+    const formatearRut = (valor) => {
+        if (!valor) return '';
+        
+        // 1. Quitar todo lo que no sea números o la letra K/k
+        let limpio = valor.replace(/[^0-9kK]/g, '');
+        
+        if (limpio.length === 0) return '';
+
+        // 2. Separar el cuerpo del dígito verificador
+        let cuerpo = limpio.slice(0, -1);
+        let dv = limpio.slice(-1).toUpperCase();
+
+        // Si el string es de solo 1 carácter, es el comienzo del cuerpo todavía
+        if (limpio.length === 1) {
+            return limpio;
+        }
+
+        // 3. Formatear el cuerpo con puntos
+        let cuerpoFormateado = '';
+        while (cuerpo.length > 3) {
+            cuerpoFormateado = '.' + cuerpo.slice(-3) + cuerpoFormateado;
+            cuerpo = cuerpo.slice(0, -3);
+        }
+        cuerpoFormateado = cuerpo + cuerpoFormateado;
+
+        // 4. Retornar la estructura final unificada con guion
+        return `${cuerpoFormateado}-${dv}`;
+    };
+
+    // Manejador para el cambio del input de RUT
+    const handleRutChange = (e) => {
+        const valorInput = e.target.value;
+        const rutFormateado = formatearRut(valorInput);
+        setNuevoUsuario({ ...nuevoUsuario, rut: rutFormateado });
+    };
+
     const iniciarEdicion = (u) => {
         setEditandoId(u.id);
         setTempData({ ...u, password: '' });
@@ -51,11 +88,28 @@ function Usuarios() {
 
                 <div className="card-panel">
                     <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>Registrar Nuevo Personal</h3>
-                    <form onSubmit={async (e) => { e.preventDefault(); if(await crearUsuario(nuevoUsuario)){ cargarDatos(); setNuevoUsuario({ rut: '', nombre: '', email: '', password: '', rol: '' }); } }} 
-                          style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <form onSubmit={async (e) => { 
+                        e.preventDefault(); 
+                        if(await crearUsuario(nuevoUsuario)){ 
+                            cargarDatos(); 
+                            setNuevoUsuario({ rut: '', nombre: '', email: '', password: '', rol: '' }); 
+                        } 
+                    }} 
+                    style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        
+                        {/* INPUT RUT CON FORMATEO AUTOMÁTICO */}
                         <div style={{ flex: 1, minWidth: '150px' }}>
-                            <input type="text" placeholder="RUT (ej: 12345678-9)" value={nuevoUsuario.rut} onChange={e => setNuevoUsuario({...nuevoUsuario, rut: e.target.value})} required className="input-custom" />
+                            <input 
+                                type="text" 
+                                placeholder="RUT (ej: 12.345.678-9)" 
+                                value={nuevoUsuario.rut} 
+                                onChange={handleRutChange} 
+                                maxLength={12} 
+                                required 
+                                className="input-custom" 
+                            />
                         </div>
+
                         <div style={{ flex: 1, minWidth: '150px' }}>
                             <input type="text" placeholder="Nombre Completo" value={nuevoUsuario.nombre} onChange={e => setNuevoUsuario({...nuevoUsuario, nombre: e.target.value})} required className="input-custom" />
                         </div>
@@ -70,7 +124,6 @@ function Usuarios() {
                                 <option value="">Asignar Rol...</option>
                                 <option value="ADMINISTRADOR">ADMINISTRADOR</option>
                                 <option value="PROFESOR">PROFESOR</option>
-                                <option value="ALUMNO">ALUMNO</option>
                             </select>
                         </div>
                         <button type="submit" className="btn-success" style={{ padding: '12px 24px' }}>Guardar</button>
@@ -102,11 +155,10 @@ function Usuarios() {
                                                 <td><input value={tempData.nombre} onChange={e => setTempData({...tempData, nombre: e.target.value})} className="input-custom" style={{ padding: '6px' }} /></td>
                                                 <td><input value={tempData.email} onChange={e => setTempData({...tempData, email: e.target.value})} className="input-custom" style={{ padding: '6px' }} /></td>
                                                 <td>
-                                                    <select value={tempData.rol} onChange={e => setTempData({...tempData, rol: e.target.value})} className="select-custom" style={{ padding: '6px' }}>
-                                                        <option value="ADMINISTRADOR">ADMINISTRADOR</option>
-                                                        <option value="PROFESOR">PROFESOR</option>
-                                                        <option value="ALUMNO">ALUMNO</option>
-                                                    </select>
+                                                    {/* 🔒 ROL PROTEGIDO: Ya no es un select, es un texto plano con estilo de etiqueta */}
+                                                    <span className="btn-primary" style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '12px', opacity: 0.75 }}>
+                                                        {tempData.rol}
+                                                    </span>
                                                 </td>
                                             </>
                                         ) : (
