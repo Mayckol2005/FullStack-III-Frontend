@@ -38,6 +38,10 @@ function Home() {
                                 <button onClick={() => navigate('/admin/estudiantes')} className="btn-primary" style={{ backgroundColor: 'var(--color-exito)', padding: '15px 30px', minWidth: '250px' }}>
                                     🎓 Gestión de Estudiantes
                                 </button>
+
+                                <button onClick={() => navigate('/admin/comunicaciones')} className="btn-primary" style={{ backgroundColor: '#6f42c1', padding: '15px 30px', minWidth: '250px' }}>
+                                    📢 Comunicaciones
+                                </button>
                             </>
                         )}
                         <button className="btn-primary" style={{ backgroundColor: '#6c757d', padding: '15px 30px', minWidth: '250px' }}>

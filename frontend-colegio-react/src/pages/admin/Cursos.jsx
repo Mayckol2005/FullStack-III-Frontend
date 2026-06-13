@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerCursosReal, crearCurso, obtenerAsignaturas, crearAsignatura } from '../../services/academicoService';
 import { obtenerUsuarios } from '../../services/usuarioService';
+import '../../styles/globals.css';
 
 const Cursos = () => {
     // Estados para almacenar la información de la base de datos
@@ -116,12 +117,16 @@ const Cursos = () => {
     };
 
     return (
-        <div style={{ padding: '24px', fontFamily: 'sans-serif', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+        <div className="dashboard-container" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
             
-            {/* Encabezado */}
-            <div style={{ marginBottom: '24px', borderBottom: '2px solid #e2e8f0', paddingBottom: '12px' }}>
-                <h1 style={{ color: '#1e293b', margin: 0, fontSize: '28px' }}>Panel de Gestión Académica</h1>
-                <p style={{ color: '#64748b', margin: '4px 0 0 0' }}>Administración estructural del año escolar: Cursos, Asignaturas y Cargas Docentes</p>
+            {/* Encabezado envuelto en recuadro blanco y con var(--color-primario) */}
+            <div className="card-panel" style={{ marginBottom: '30px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                <h1 style={{ color: 'var(--color-primario)', margin: '0 0 8px 0', fontSize: '24px' }}>
+                    Panel de Gestión Académica
+                </h1>
+                <p style={{ color: 'var(--color-texto-secundario)', margin: 0, fontSize: '15px' }}>
+                    Administración estructural del año escolar: Cursos, Asignaturas y Cargas Docentes
+                </p>
             </div>
 
             {/* Alertas */}
@@ -142,7 +147,7 @@ const Cursos = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px', marginBottom: '32px' }}>
                 
                 {/* Formulario Curso */}
-                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <h2 style={{ color: '#0f172a', fontSize: '18px', marginTop: 0, borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>Registrar Nuevo Curso</h2>
                     <form onSubmit={handleCrearCurso} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
                         <div>
@@ -177,14 +182,14 @@ const Cursos = () => {
                                 <option value="Media">Educación Media</option>
                             </select>
                         </div>
-                        <button type="submit" style={{ backgroundColor: '#0284c7', color: '#fff', padding: '10px', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}>
+                        <button type="submit" className="btn-primary" style={{ padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '8px' }}>
                             Guardar Curso
                         </button>
                     </form>
                 </div>
 
                 {/* Formulario Asignatura */}
-                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <h2 style={{ color: '#0f172a', fontSize: '18px', marginTop: 0, borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>Registrar Nueva Asignatura</h2>
                     <form onSubmit={handleCrearAsignatura} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
                         <div>
@@ -198,7 +203,6 @@ const Cursos = () => {
                             />
                         </div>
                         
-                        {/* INTEGRACIÓN DEL NUEVO SELECT DE CURSOS ORDENADOS */}
                         <div>
                             <label style={{ display: 'block', marginBottom: '4px', color: '#475569', fontWeight: '500' }}>Asociar a Curso:</label>
                             <select 
@@ -226,7 +230,7 @@ const Cursos = () => {
                                 ))}
                             </select>
                         </div>
-                        <button type="submit" style={{ backgroundColor: '#0f766e', color: '#fff', padding: '10px', borderRadius: '6px', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }}>
+                        <button type="submit" className="btn-primary" style={{ backgroundColor: '#0f766e', padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '8px' }}>
                             Vincular Asignatura
                         </button>
                     </form>
@@ -237,8 +241,8 @@ const Cursos = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
                 
                 {/* Tabla Cursos */}
-                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <h3 style={{ color: '#1ie293b', margin: '0 0 12px 0', fontSize: '16px' }}>Cursos Operando</h3>
+                <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '16px' }}>Cursos Operando</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead>
@@ -268,7 +272,7 @@ const Cursos = () => {
                 </div>
 
                 {/* Tabla Asignaturas */}
-                <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '16px' }}>Asignaturas y Cargas de Estudios</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>

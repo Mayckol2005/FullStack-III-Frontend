@@ -10,6 +10,7 @@ import ProfesorRoutes from '../pages/profesor/ProfesorRoutes.jsx';
 import Estudiantes from '../pages/admin/Estudiantes.jsx';
 import Usuarios from '../pages/admin/Usuarios.jsx';
 import Cursos from '../pages/admin/Cursos.jsx';
+import Comunicaciones from '../pages/admin/Comunicaciones.jsx';
 
 const AppRoutes = () => {
   const { autenticado, cargando } = useAuth();
@@ -25,6 +26,7 @@ const AppRoutes = () => {
       <Route path="/admin/usuarios" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida>} />
       <Route path="/admin/cursos" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Cursos /></RutaProtegida>} />
       <Route path="/admin/cursos" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Cursos /></RutaProtegida>} />
+      <Route path="/admin/comunicaciones" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Comunicaciones /></RutaProtegida>} />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
