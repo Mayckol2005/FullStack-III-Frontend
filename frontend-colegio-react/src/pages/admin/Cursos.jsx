@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerCursosReal, crearCurso, obtenerAsignaturas, crearAsignatura } from '../../services/academicoService';
+import { useNavigate } from 'react-router-dom'; // 1. Importamos useNavigate
+import { obtenerCursosReal, crearCurso, obtenerAsignaturas, crearAsignatura, actualizarAsignatura, eliminarAsignatura } from '../../services/academicoService';
 import { obtenerUsuarios } from '../../services/usuarioService';
 import '../../styles/globals.css';
 
@@ -13,8 +14,14 @@ const Cursos = () => {
     const [nuevoCurso, setNuevoCurso] = useState({ grado: '', letra: '', nivel: '' });
     const [nuevaAsignatura, setNuevaAsignatura] = useState({ nombre: '', cursoId: '', docenteId: '' });
 
+    // Estado para saber si estamos editando una asignatura
+    const [asignaturaEditando, setAsignaturaEditando] = useState(null);
+
     // Estado para las alertas visuales
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+
+    // 2. Inicializamos el hook de navegación
+    const navigate = useNavigate();
 
     // Cargar información desde los microservicios
     const cargarDatos = async () => {
@@ -93,8 +100,38 @@ const Cursos = () => {
         }
     };
 
-    // Manejar el registro de una nueva Asignatura
-    const handleCrearAsignatura = async (e) => {
+    // Preparar el formulario para editar Asignatura
+    const iniciarEdicionAsignatura = (asignatura) => {
+        setAsignaturaEditando(asignatura.id);
+        setNuevaAsignatura({
+            nombre: asignatura.nombre,
+            cursoId: asignatura.cursoId,
+            docenteId: asignatura.docenteId
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' }); // Sube la pantalla al formulario
+    };
+
+    // Cancelar la edición de Asignatura
+    const cancelarEdicion = () => {
+        setAsignaturaEditando(null);
+        setNuevaAsignatura({ nombre: '', cursoId: '', docenteId: '' });
+    };
+
+    // Eliminar asignatura con confirmación
+    const handleEliminarAsignatura = async (id, nombre) => {
+        if (window.confirm(`¿Estás seguro de que deseas eliminar la asignatura "${nombre}"? Esta acción no se puede deshacer.`)) {
+            const exito = await eliminarAsignatura(id);
+            if (exito) {
+                mostrarAlerta(`Asignatura "${nombre}" eliminada correctamente.`, "exito");
+                cargarDatos();
+            } else {
+                mostrarAlerta("Error al eliminar la asignatura.", "error");
+            }
+        }
+    };
+
+    // Manejar el registro o actualización de una Asignatura
+    const handleGuardarAsignatura = async (e) => {
         e.preventDefault();
         if (!nuevaAsignatura.nombre || !nuevaAsignatura.cursoId || !nuevaAsignatura.docenteId) {
             return mostrarAlerta("Por favor, completa todos los campos de la asignatura.", "error");
@@ -106,38 +143,104 @@ const Cursos = () => {
             docenteId: Number(nuevaAsignatura.docenteId)
         };
 
-        const exito = await crearAsignatura(dataParaEnviar);
-        if (exito) {
-            mostrarAlerta(`Asignatura "${nuevaAsignatura.nombre}" creada con éxito`, "exito");
-            setNuevaAsignatura({ nombre: '', cursoId: '', docenteId: '' });
-            cargarDatos();
+        if (asignaturaEditando) {
+            // Lógica de ACTUALIZAR
+            const exito = await actualizarAsignatura(asignaturaEditando, dataParaEnviar);
+            if (exito) {
+                mostrarAlerta(`Asignatura actualizada con éxito`, "exito");
+                cancelarEdicion();
+                cargarDatos();
+            } else {
+                mostrarAlerta("Error al actualizar la asignatura en el servidor", "error");
+            }
         } else {
-            mostrarAlerta("Error al guardar la asignatura en el servidor", "error");
+            // Lógica de CREAR con validación de duplicados
+            const asignaturaDuplicada = asignaturas.some(a => 
+                a.nombre.trim().toLowerCase() === nuevaAsignatura.nombre.trim().toLowerCase() && 
+                Number(a.cursoId) === Number(nuevaAsignatura.cursoId)
+            );
+
+            if (asignaturaDuplicada) {
+                const detalleCurso = obtenerDetalleCurso(nuevaAsignatura.cursoId);
+                return mostrarAlerta(`¡Atención! La asignatura "${nuevaAsignatura.nombre}" ya existe en el curso ${detalleCurso}.`, "error");
+            }
+
+            const exito = await crearAsignatura(dataParaEnviar);
+            if (exito) {
+                mostrarAlerta(`Asignatura "${nuevaAsignatura.nombre}" creada con éxito`, "exito");
+                setNuevaAsignatura({ nombre: '', cursoId: '', docenteId: '' });
+                cargarDatos();
+            } else {
+                mostrarAlerta("Error al guardar la asignatura en el servidor", "error");
+            }
         }
     };
 
     return (
         <div className="dashboard-container" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
             
-            {/* Encabezado envuelto en recuadro blanco y con var(--color-primario) */}
-            <div className="card-panel" style={{ marginBottom: '30px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                <h1 style={{ color: 'var(--color-primario)', margin: '0 0 8px 0', fontSize: '24px' }}>
-                    Panel de Gestión Académica
-                </h1>
-                <p style={{ color: 'var(--color-texto-secundario)', margin: 0, fontSize: '15px' }}>
-                    Administración estructural del año escolar: Cursos, Asignaturas y Cargas Docentes
-                </p>
+            {/* Encabezado con Flexbox para incluir el botón de Volver atrás */}
+            <div className="card-panel" style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                marginBottom: '30px', 
+                padding: '25px', 
+                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+                flexWrap: 'wrap',
+                gap: '15px'
+            }}>
+                <div>
+                    <h1 style={{ color: 'var(--color-primario)', margin: '0 0 8px 0', fontSize: '24px' }}>
+                        Panel de Gestión Académica
+                    </h1>
+                    <p style={{ color: 'var(--color-texto-secundario)', margin: 0, fontSize: '15px' }}>
+                        Administración estructural del año escolar: Cursos, Asignaturas y Cargas Docentes
+                    </p>
+                </div>
+                
+                {/* BOTÓN ACTUALIZADO PARA VOLVER AL HOME */}
+                <button 
+                    onClick={() => navigate('/home')} /* <-- Modificado para ir directamente al Inicio */
+                    style={{
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
+                        padding: '10px 18px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                    }}
+                    onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        e.currentTarget.style.borderColor = '#94a3b8';
+                    }}
+                    onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                >
+                    <i className="fas fa-home" style={{ color: 'var(--color-primario)' }}></i> 
+                    Menú principal
+                </button>
             </div>
 
-            {/* Alertas */}
+            {/* --- ALERTA ACTUALIZADA AL NUEVO DISEÑO --- */}
             {mensaje.texto && (
                 <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '6px',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
                     marginBottom: '20px',
-                    fontWeight: 'bold',
-                    color: '#fff',
-                    backgroundColor: mensaje.tipo === 'exito' ? '#10b981' : '#ef4444'
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    backgroundColor: mensaje.tipo === 'exito' ? '#e6f4ea' : '#fde8e8',
+                    color: mensaje.tipo === 'exito' ? '#1e4620' : '#9b1c1c',
+                    border: mensaje.tipo === 'exito' ? '1px solid #cce8d6' : '1px solid #f8b4b4'
                 }}>
                     {mensaje.texto}
                 </div>
@@ -190,8 +293,10 @@ const Cursos = () => {
 
                 {/* Formulario Asignatura */}
                 <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <h2 style={{ color: '#0f172a', fontSize: '18px', marginTop: 0, borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>Registrar Nueva Asignatura</h2>
-                    <form onSubmit={handleCrearAsignatura} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                    <h2 style={{ color: '#0f172a', fontSize: '18px', marginTop: 0, borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                        {asignaturaEditando ? 'Modificar Asignatura' : 'Registrar Nueva Asignatura'}
+                    </h2>
+                    <form onSubmit={handleGuardarAsignatura} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '4px', color: '#475569', fontWeight: '500' }}>Nombre de la Materia:</label>
                             <input 
@@ -230,39 +335,45 @@ const Cursos = () => {
                                 ))}
                             </select>
                         </div>
-                        <button type="submit" className="btn-primary" style={{ backgroundColor: '#0f766e', padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '8px' }}>
-                            Vincular Asignatura
-                        </button>
+                        
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                            <button type="submit" className="btn-primary" style={{ backgroundColor: asignaturaEditando ? '#0284c7' : '#0f766e', padding: '10px', fontWeight: 'bold', flex: 1 }}>
+                                {asignaturaEditando ? 'Actualizar Asignatura' : 'Vincular Asignatura'}
+                            </button>
+                            {asignaturaEditando && (
+                                <button type="button" onClick={cancelarEdicion} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px', fontWeight: 'bold', borderRadius: '6px', cursor: 'pointer' }}>
+                                    Cancelar
+                                </button>
+                            )}
+                        </div>
                     </form>
                 </div>
             </div>
 
             {/* SECCIÓN 2: TABLAS */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                 
                 {/* Tabla Cursos */}
                 <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '16px' }}>Cursos Operando</h3>
+                    <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '18px' }}>Cursos Operando</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead>
                                 <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
-                                    <th style={{ padding: '10px', color: '#475569' }}>ID</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Grado</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Letra</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Nivel</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Grado</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Letra</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Nivel</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {cursos.length === 0 ? (
-                                    <tr><td colSpan="4" style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>No hay cursos estructurados en el sistema.</td></tr>
+                                    <tr><td colSpan="3" style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>No hay cursos estructurados en el sistema.</td></tr>
                                 ) : (
                                     cursos.map((c) => (
                                         <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '10px', fontWeight: 'bold', color: '#64748b' }}>{c.id}</td>
-                                            <td style={{ padding: '10px', color: '#334155' }}>{c.grado}</td>
-                                            <td style={{ padding: '10px', color: '#334155' }}>{c.letra}</td>
-                                            <td style={{ padding: '10px' }}><span style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{c.nivel}</span></td>
+                                            <td style={{ padding: '12px 16px', color: '#334155' }}>{c.grado}</td>
+                                            <td style={{ padding: '12px 16px', color: '#334155' }}>{c.letra}</td>
+                                            <td style={{ padding: '12px 16px' }}><span style={{ backgroundColor: '#e0f2fe', color: '#0369a1', padding: '4px 10px', borderRadius: '12px', fontSize: '13px', fontWeight: '500' }}>{c.nivel}</span></td>
                                         </tr>
                                     ))
                                 )}
@@ -273,15 +384,15 @@ const Cursos = () => {
 
                 {/* Tabla Asignaturas */}
                 <div className="card-panel" style={{ padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '16px' }}>Asignaturas y Cargas de Estudios</h3>
+                    <h3 style={{ color: '#1e293b', margin: '0 0 12px 0', fontSize: '18px' }}>Asignaturas y Cargas de Estudios</h3>
                     <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead>
                                 <tr style={{ backgroundColor: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
-                                    <th style={{ padding: '10px', color: '#475569' }}>ID</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Nombre Materia</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Curso</th>
-                                    <th style={{ padding: '10px', color: '#475569' }}>Docente Responsable</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Nombre Materia</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Curso</th>
+                                    <th style={{ padding: '12px 16px', color: '#475569' }}>Docente Responsable</th>
+                                    <th style={{ width: '120px', textAlign: 'center', padding: '12px 16px', color: '#475569' }}>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -290,12 +401,27 @@ const Cursos = () => {
                                 ) : (
                                     asignaturas.map((a) => (
                                         <tr key={a.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                            <td style={{ padding: '10px', fontWeight: 'bold', color: '#64748b' }}>{a.id}</td>
-                                            <td style={{ padding: '10px', color: '#334155', fontWeight: '500' }}>{a.nombre}</td>
-                                            <td style={{ padding: '10px', color: '#0284c7', fontWeight: '500' }}>
+                                            <td style={{ padding: '12px 16px', color: '#334155', fontWeight: '500' }}>{a.nombre}</td>
+                                            <td style={{ padding: '12px 16px', color: '#0284c7', fontWeight: '500' }}>
                                                 {obtenerDetalleCurso(a.cursoId)}
                                             </td>
-                                            <td style={{ padding: '10px', color: '#0f766e', fontWeight: '500' }}>{obtenerNombreDocente(a.docenteId)}</td>
+                                            <td style={{ padding: '12px 16px', color: '#0f766e', fontWeight: '500' }}>{obtenerNombreDocente(a.docenteId)}</td>
+                                            <td style={{ textAlign: 'center', padding: '12px 16px' }}>
+                                                <button 
+                                                    onClick={() => iniciarEdicionAsignatura(a)}
+                                                    style={{ border: 'none', background: 'none', cursor: 'pointer', marginRight: '15px' }}
+                                                    title="Editar"
+                                                >
+                                                    <i className="fas fa-pencil-alt" style={{ color: 'var(--color-primario)', fontSize: '16px' }}></i>
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleEliminarAsignatura(a.id, a.nombre)}
+                                                    style={{ border: 'none', background: 'none', cursor: 'pointer' }}
+                                                    title="Eliminar"
+                                                >
+                                                    <i className="fas fa-trash" style={{ color: '#ef4444', fontSize: '16px' }}></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}

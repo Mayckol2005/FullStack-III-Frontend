@@ -8,7 +8,7 @@ const getAuthHeaders = () => {
     };
 };
 
-// 🏫 Conectado con CursoController.java -> GET /api/academico/cursos [cite: 30, 31]
+// 🏫 Conectado con CursoController.java -> GET /api/academico/cursos
 export const obtenerCursosReal = async () => {
     try {
         const respuesta = await fetch(`${API_BASE}/cursos`, { headers: getAuthHeaders() });
@@ -20,7 +20,7 @@ export const obtenerCursosReal = async () => {
     }
 };
 
-// 🏫 Conectado con CursoController.java -> POST /api/academico/cursos [cite: 30, 39]
+// 🏫 Conectado con CursoController.java -> POST /api/academico/cursos
 export const crearCurso = async (cursoData) => {
     try {
         const respuesta = await fetch(`${API_BASE}/cursos`, {
@@ -28,7 +28,7 @@ export const crearCurso = async (cursoData) => {
             headers: getAuthHeaders(),
             body: JSON.stringify(cursoData)
         });
-        // Tus controladores responden con HttpStatus.CREATED (201) [cite: 42]
+        // Tus controladores responden con HttpStatus.CREATED (201)
         return respuesta.status === 201 || respuesta.ok;
     } catch (error) {
         console.error("Error creando nuevo curso en el backend:", error);
@@ -36,7 +36,7 @@ export const crearCurso = async (cursoData) => {
     }
 };
 
-// 📚 Conectado con AsignaturaController.java -> GET /api/academico/asignaturas (¡Optimizado!) [cite: 46, 47]
+// 📚 Conectado con AsignaturaController.java -> GET /api/academico/asignaturas (¡Optimizado!)
 export const obtenerAsignaturas = async () => {
     try {
         const respuesta = await fetch(`${API_BASE}/asignaturas`, { headers: getAuthHeaders() });
@@ -48,7 +48,7 @@ export const obtenerAsignaturas = async () => {
     }
 };
 
-// 📚 Conectado con AsignaturaController.java -> POST /api/academico/asignaturas [cite: 46, 53]
+// 📚 Conectado con AsignaturaController.java -> POST /api/academico/asignaturas
 export const crearAsignatura = async (asignaturaData) => {
     try {
         const respuesta = await fetch(`${API_BASE}/asignaturas`, {
@@ -56,7 +56,7 @@ export const crearAsignatura = async (asignaturaData) => {
             headers: getAuthHeaders(),
             body: JSON.stringify(asignaturaData)
         });
-        // Tu controlador responde con HttpStatus.CREATED (201) [cite: 56]
+        // Tu controlador responde con HttpStatus.CREATED (201)
         return respuesta.status === 201 || respuesta.ok;
     } catch (error) {
         console.error("Error creando nueva asignatura en el backend:", error);
@@ -64,7 +64,38 @@ export const crearAsignatura = async (asignaturaData) => {
     }
 };
 
-// Conservamos tu método original por si lo requieres en otra sección [cite: 50]
+// ✏️ NUEVO: Conectado con AsignaturaController.java -> PUT /api/academico/asignaturas/{id}
+export const actualizarAsignatura = async (id, asignaturaData) => {
+    try {
+        const respuesta = await fetch(`${API_BASE}/asignaturas/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(asignaturaData)
+        });
+        // Retornamos true si la respuesta es exitosa (200 OK)
+        return respuesta.ok;
+    } catch (error) {
+        console.error("Error actualizando la asignatura en el backend:", error);
+        return false;
+    }
+};
+
+// 🗑️ NUEVO: Conectado con AsignaturaController.java -> DELETE /api/academico/asignaturas/{id}
+export const eliminarAsignatura = async (id) => {
+    try {
+        const respuesta = await fetch(`${API_BASE}/asignaturas/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        // Retornamos true si responde HttpStatus.NO_CONTENT (204) o 200 OK
+        return respuesta.status === 204 || respuesta.ok;
+    } catch (error) {
+        console.error("Error eliminando la asignatura en el backend:", error);
+        return false;
+    }
+};
+
+// Conservamos tu método original por si lo requieres en otra sección
 export const obtenerAsignaturasPorCursoReal = async (cursoId) => {
     try {
         const respuesta = await fetch(`${API_BASE}/asignaturas/curso/${cursoId}`, { headers: getAuthHeaders() });

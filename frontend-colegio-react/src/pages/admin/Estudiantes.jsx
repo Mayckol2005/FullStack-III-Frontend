@@ -1,34 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerEstudiantes, crearEstudiante, actualizarEstudianteBD, eliminarEstudianteBD } from '../../services/estudianteService';
+import { 
+    obtenerEstudiantes, 
+    crearEstudiante, 
+    actualizarEstudianteBD, 
+    eliminarEstudianteBD 
+} from '../../services/estudianteService';
 import { obtenerCursosReal } from '../../services/academicoService';
 import '../../styles/globals.css';
 
 const Estudiantes = () => {
+    // --- Estados Principales ---
     const [estudiantes, setEstudiantes] = useState([]);
     const [cursos, setCursos] = useState([]);
-    
-    // Estados para la Edición Inline (Igual que en Usuarios)
+    const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+
+    // --- Estados para Edición Inline ---
     const [editandoId, setEditandoId] = useState(null);
     const [tempData, setTempData] = useState({});
 
-    const [nuevoEstudiante, setNuevoEstudiante] = useState({
+    // --- Estado para Nuevo Estudiante ---
+    const estadoInicialNuevo = {
         rut: '',
         nombres: '',
         apellidos: '',
         email: '',
         fechaNacimiento: '',
         cursoId: ''
-    });
-    const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
+    };
+    const [nuevoEstudiante, setNuevoEstudiante] = useState(estadoInicialNuevo);
 
+    // --- Carga de Datos ---
     const cargarDatos = async () => {
         try {
-            const dataEstudiantes = await obtenerEstudiantes();
-            const dataCursos = await obtenerCursosReal();
+            const [dataEstudiantes, dataCursos] = await Promise.all([
+                obtenerEstudiantes(),
+                obtenerCursosReal()
+            ]);
             setEstudiantes(dataEstudiantes || []);
             setCursos(dataCursos || []);
         } catch (error) {
             console.error("Error al cargar datos de estudiantes/cursos:", error);
+            mostrarAlerta("Error al cargar los datos", "error");
         }
     };
 
@@ -36,7 +48,12 @@ const Estudiantes = () => {
         cargarDatos();
     }, []);
 
-    // 🇨🇱 Función para formatear el RUT dinámicamente en tiempo real (xx.xxx.xxx-x)
+    // --- Utilidades ---
+    const mostrarAlerta = (texto, tipo) => {
+        setMensaje({ texto, tipo });
+        setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
+    };
+
     const formatearRut = (valor) => {
         if (!valor) return '';
         let limpio = valor.replace(/[^0-9kK]/g, '');
@@ -45,9 +62,7 @@ const Estudiantes = () => {
         let cuerpo = limpio.slice(0, -1);
         let dv = limpio.slice(-1).toUpperCase();
 
-        if (limpio.length === 1) {
-            return limpio;
-        }
+        if (limpio.length === 1) return limpio;
 
         let cuerpoFormateado = '';
         while (cuerpo.length > 3) {
@@ -57,17 +72,6 @@ const Estudiantes = () => {
         cuerpoFormateado = cuerpo + cuerpoFormateado;
 
         return `${cuerpoFormateado}-${dv}`;
-    };
-
-    const handleRutChange = (e) => {
-        const valorInput = e.target.value;
-        const rutFormateado = formatearRut(valorInput);
-        setNuevoEstudiante({ ...nuevoEstudiante, rut: rutFormateado });
-    };
-
-    const mostrarAlerta = (texto, tipo) => {
-        setMensaje({ texto, tipo });
-        setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
     };
 
     const obtenerDetalleCurso = (cursoId) => {
@@ -82,12 +86,50 @@ const Estudiantes = () => {
         return a.letra.localeCompare(b.letra);
     });
 
-    // --- Funciones de Control de Edición Inline ---
+    const obtenerEstiloEstado = (estado) => {
+        switch(estado?.toUpperCase()) {
+            case 'MATRICULA SUSPENDIDA': return { backgroundColor: 'var(--color-peligro)', color: '#fff' };
+            case 'MATRICULA PENDIENTE': return { backgroundColor: '#f59e0b', color: '#fff' };
+            default: return { backgroundColor: 'var(--color-primario)', color: '#fff' };
+        }
+    };
+
+    // --- Manejadores de Eventos (Handlers) ---
+    const handleRutChange = (e) => {
+        const rutFormateado = formatearRut(e.target.value);
+        setNuevoEstudiante({ ...nuevoEstudiante, rut: rutFormateado });
+    };
+
+    const handleMatricular = async (e) => {
+        e.preventDefault();
+        const { rut, nombres, apellidos, cursoId } = nuevoEstudiante;
+        
+        if (!rut || !nombres || !apellidos || !cursoId) {
+            mostrarAlerta("Por favor, completa los campos obligatorios (RUT, Nombres, Apellidos y Curso)", "error");
+            return;
+        }
+
+        const payload = {
+            ...nuevoEstudiante,
+            cursoId: Number(cursoId),
+            estado: 'MATRICULADO' 
+        };
+
+        const exito = await crearEstudiante(payload);
+        if (exito) {
+            mostrarAlerta("Estudiante matriculado correctamente", "exito");
+            setNuevoEstudiante(estadoInicialNuevo);
+            cargarDatos();
+        } else {
+            mostrarAlerta("Error al procesar la matrícula", "error");
+        }
+    };
+
+    // --- Control de Edición Inline ---
     const iniciarEdicion = (estudiante) => {
         setEditandoId(estudiante.id);
         setTempData({ 
             ...estudiante,
-            // Nos aseguramos que mantenga el estado por defecto o inicial en mayúsculas
             estado: estudiante.estado || 'MATRICULADO' 
         });
     };
@@ -101,17 +143,16 @@ const Estudiantes = () => {
         if (window.confirm("¿Confirmar modificaciones del estudiante?")) {
             const datosAEnviar = { 
                 ...tempData,
-                cursoId: Number(tempData.cursoId) // Forzar que viaje como número
+                cursoId: Number(tempData.cursoId) 
             };
             
-            // Llama a tu servicio pasándole el ID y la data modificada
             const exito = await actualizarEstudianteBD(id, datosAEnviar);
             if (exito) {
-                mostrarAlerta("Datos del estudiante actualizados con éxito", "exito");
+                mostrarAlerta("Datos actualizados con éxito", "exito");
                 setEditandoId(null);
                 cargarDatos();
             } else {
-                mostrarAlerta("Error al actualizar los datos del estudiante", "error");
+                mostrarAlerta("Error al actualizar los datos", "error");
             }
         }
     };
@@ -128,52 +169,50 @@ const Estudiantes = () => {
         }
     };
 
-    const handleMatricular = async (e) => {
-        e.preventDefault();
-        if (!nuevoEstudiante.rut || !nuevoEstudiante.nombres || !nuevoEstudiante.apellidos || !nuevoEstudiante.cursoId) {
-            mostrarAlerta("Por favor, completa los campos obligatorios (RUT, Nombres, Apellidos y Curso)", "error");
-            return;
-        }
-
-        const payload = {
-            ...nuevoEstudiante,
-            cursoId: Number(nuevoEstudiante.cursoId),
-            estado: 'MATRICULADO' // Por defecto al crearse nuevo
-        };
-
-        const exito = await crearEstudiante(payload);
-        if (exito) {
-            mostrarAlerta("Estudiante matriculado correctamente", "exito");
-            setNuevoEstudiante({ rut: '', nombres: '', apellidos: '', email: '', fechaNacimiento: '', cursoId: '' });
-            cargarDatos();
-        } else {
-            mostrarAlerta("Error al procesar la matrícula", "error");
-        }
-    };
-
-    // Función auxiliar para renderizar los colores de los Badges dinámicamente según el estado
-    const obtenerEstiloEstado = (estado) => {
-        switch(estado?.toUpperCase()) {
-            case 'MATRICULA SUSPENDIDA':
-                return { backgroundColor: 'var(--color-peligro)', color: '#fff' };
-            case 'MATRICULA PENDIENTE':
-                return { backgroundColor: '#f59e0b', color: '#fff' }; // Ámbar / Naranja
-            default:
-                return { backgroundColor: 'var(--color-primario)', color: '#fff' }; // Azul institucional
-        }
-    };
-
     return (
         <div>
             <div className="dashboard-container" style={{ paddingTop: '10px' }}>
                 
-                <div className="header-app">
+                {/* --- Encabezado --- */}
+                <div className="header-app" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                     <div>
                         <h1 style={{ margin: 0, color: 'var(--color-primario)', fontSize: '24px' }}>Matrícula Escolar</h1>
                         <p style={{ margin: '4px 0 0 0', color: 'var(--color-texto-secundario)' }}>Gestión integrada de estudiantes matriculados</p>
                     </div>
+                    
+                    {/* --- Botón de Navegación Corregido --- */}
+                    <button 
+                        onClick={() => window.location.href = '/home'}
+                        style={{
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            color: '#334155',
+                            padding: '10px 18px',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            height: 'fit-content'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f1f5f9';
+                            e.currentTarget.style.borderColor = '#94a3b8';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                            e.currentTarget.style.borderColor = '#cbd5e1';
+                        }}
+                    >
+                        <i className="fas fa-home" style={{ color: 'var(--color-primario)' }}></i> 
+                        Menú principal
+                    </button>
                 </div>
 
+                {/* --- Alertas --- */}
                 {mensaje.texto && (
                     <div className="card-panel" style={{ 
                         backgroundColor: mensaje.tipo === 'exito' ? '#e6f4ea' : '#fce8e6', 
@@ -186,7 +225,7 @@ const Estudiantes = () => {
                     </div>
                 )}
 
-                {/* Formulario de registro */}
+                {/* --- Formulario de Registro --- */}
                 <div className="card-panel">
                     <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>Matricular Alumno</h3>
                     <form onSubmit={handleMatricular} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -217,7 +256,7 @@ const Estudiantes = () => {
                     </form>
                 </div>
 
-                {/* Tabla con Sistema Inline Dinámico */}
+                {/* --- Tabla Dinámica --- */}
                 <div className="card-panel" style={{ padding: 0 }}>
                     <div className="table-responsive">
                         <table className="table-custom">
@@ -243,7 +282,7 @@ const Estudiantes = () => {
                                     estudiantes.map((e) => (
                                         <tr key={e.id}>
                                             {editandoId === e.id ? (
-                                                /* ================= VISTA MODO EDICIÓN ================= */
+                                                /* --- MODO EDICIÓN --- */
                                                 <>
                                                     <td style={{ textAlign: 'center' }}>
                                                         <button onClick={() => guardarCambios(e.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', marginRight: '10px' }}>
@@ -253,28 +292,25 @@ const Estudiantes = () => {
                                                             <i className="fas fa-times" style={{ color: 'var(--color-peligro)', fontSize: '16px' }}></i>
                                                         </button>
                                                     </td>
-                                                    {/* RUT Deshabilitado/Bloqueado tal cual como solicitaste */}
                                                     <td style={{ color: '#94a3b8' }}>{e.rut}</td>
                                                     <td>
-                                                        <input value={tempData.nombres} onChange={el => setTempData({...tempData, nombres: el.target.value})} className="input-custom" style={{ padding: '6px' }} />
+                                                        <input value={tempData.nombres || ''} onChange={el => setTempData({...tempData, nombres: el.target.value})} className="input-custom" style={{ padding: '6px' }} />
                                                     </td>
                                                     <td>
-                                                        <input value={tempData.apellidos} onChange={el => setTempData({...tempData, apellidos: el.target.value})} className="input-custom" style={{ padding: '6px' }} />
+                                                        <input value={tempData.apellidos || ''} onChange={el => setTempData({...tempData, apellidos: el.target.value})} className="input-custom" style={{ padding: '6px' }} />
                                                     </td>
                                                     <td>
                                                         <input value={tempData.email || ''} onChange={el => setTempData({...tempData, email: el.target.value})} className="input-custom" style={{ padding: '6px' }} />
                                                     </td>
                                                     <td>
-                                                        {/* Combobox Dinámico Ordenado para cambiar de curso */}
-                                                        <select value={tempData.cursoId} onChange={el => setTempData({...tempData, cursoId: el.target.value})} className="select-custom" style={{ padding: '6px', height: '34px' }}>
+                                                        <select value={tempData.cursoId || ''} onChange={el => setTempData({...tempData, cursoId: el.target.value})} className="select-custom" style={{ padding: '6px', height: '34px' }}>
                                                             {cursosOrdenados.map((c) => (
                                                                 <option key={c.id} value={c.id}>{c.grado}° {c.letra} ({c.nivel})</option>
                                                             ))}
                                                         </select>
                                                     </td>
                                                     <td>
-                                                        {/* Selector de los 3 estados solicitados */}
-                                                        <select value={tempData.estado} onChange={el => setTempData({...tempData, estado: el.target.value})} className="select-custom" style={{ padding: '6px', height: '34px' }}>
+                                                        <select value={tempData.estado || ''} onChange={el => setTempData({...tempData, estado: el.target.value})} className="select-custom" style={{ padding: '6px', height: '34px' }}>
                                                             <option value="MATRICULADO">MATRICULADO</option>
                                                             <option value="MATRICULA SUSPENDIDA">MATRICULA SUSPENDIDA</option>
                                                             <option value="MATRICULA PENDIENTE">MATRICULA PENDIENTE</option>
@@ -282,7 +318,7 @@ const Estudiantes = () => {
                                                     </td>
                                                 </>
                                             ) : (
-                                                /* ================= VISTA MODO LECTURA ================= */
+                                                /* --- MODO LECTURA --- */
                                                 <>
                                                     <td style={{ textAlign: 'center' }}>
                                                         <button onClick={() => iniciarEdicion(e)} style={{ border: 'none', background: 'none', cursor: 'pointer', marginRight: '10px' }}>

@@ -1,102 +1,133 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerAvisos, crearAviso } from '../../services/comunicacionService';
-import * as academicoService from '../../services/academicoService'; 
+// 1. Agregamos eliminarAviso a las importaciones
+import { obtenerAvisos, crearAviso, eliminarAviso } from '../../services/comunicacionService';
 import '../../styles/globals.css';
 
 const Comunicaciones = () => {
+    // --- Estados ---
     const [avisos, setAvisos] = useState([]);
-    const [cursos, setCursos] = useState([]);
-    
-    // Estado del Formulario
     const [titulo, setTitulo] = useState('');
     const [contenido, setContenido] = useState('');
-    const [cursoId, setCursoId] = useState('');
-    
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
     const [cargando, setCargando] = useState(true);
 
+    // --- Efectos ---
     useEffect(() => {
         cargarDatos();
     }, []);
 
+    // --- Utilidades ---
+    const mostrarAlerta = (texto, tipo) => {
+        setMensaje({ texto, tipo });
+        // Auto-ocultar la alerta después de 4 segundos
+        setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
+    };
+
+    // --- Carga de Datos ---
     const cargarDatos = async () => {
         try {
             setCargando(true);
-            
-            // 1. Cargar Avisos
             const listaAvisos = await obtenerAvisos();
             setAvisos(listaAvisos);
-
-            // 2. Intentar detectar dinámicamente cómo llamaste a la función de los cursos
-            const buscarFuncionCursos = 
-                academicoService.obtenerCursos || 
-                academicoService.listarCursos || 
-                academicoService.getCursos ||
-                academicoService.obtenerCursosReal; 
-
-            if (!buscarFuncionCursos) {
-                console.error("No se detectó función de cursos. Revisa los nombres en la consola.");
-                setMensaje({ 
-                    texto: 'Mural cargado, pero no se pudo mapear la función de cursos en academicoService.', 
-                    tipo: 'error' 
-                });
-                return;
-            }
-
-            const listaCursos = await buscarFuncionCursos();
-            const cursosOrdenados = [...listaCursos].sort((a, b) => String(a.grado).localeCompare(String(b.grado)));
-            setCursos(cursosOrdenados);
-            
         } catch (error) {
-            setMensaje({ texto: 'Error al sincronizar con los microservicios.', tipo: 'error' });
+            console.error("Error cargando avisos:", error);
+            mostrarAlerta('Error al sincronizar con los microservicios.', 'error');
         } finally {
             setCargando(false);
         }
     };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!titulo.trim() || !contenido.trim() || !cursoId) {
-            setMensaje({ texto: 'Todos los campos son obligatorios para emitir la circular.', tipo: 'error' });
+        if (!titulo.trim() || !contenido.trim()) {
+            mostrarAlerta('Todos los campos son obligatorios para emitir la circular.', 'error');
             return;
+        }
+
+        // Alerta de confirmación
+        if (!window.confirm("¿Está seguro de publicar este comunicado?")) {
+            return; 
         }
 
         try {
             const nuevoAviso = {
                 titulo: titulo.trim(),
-                contenido: contenido.trim(),
-                cursoId: parseInt(cursoId)
+                contenido: contenido.trim()
             };
 
-            await crearAviso(nuevoAviso);
-            setMensaje({ texto: '¡Comunicado oficial publicado con éxito!', tipo: 'exito' });
+            const exito = await crearAviso(nuevoAviso);
+            
+            if (exito === false) {
+                mostrarAlerta('El servidor rechazó el envío (revisa la consola).', 'error');
+                return;
+            }
+
+            mostrarAlerta('¡Comunicado oficial publicado con éxito!', 'exito');
             
             setTitulo('');
             setContenido('');
-            setCursoId('');
-            
-            const listaActualizada = await obtenerAvisos();
-            setAvisos(listaActualizada);
+            cargarDatos();
         } catch (error) {
-            setMensaje({ texto: 'Hubo un problema al procesar el envío.', tipo: 'error' });
+            console.error("🔥 ERROR OCULTO DE REACT ANTES DE ENVIAR:", error);
+            mostrarAlerta(`Error de código: ${error.message}`, 'error');
         }
     };
 
     return (
         <div className="dashboard-container" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
             
-            {/* Cabecera del Módulo envuelta en card-panel y sin emoji */}
-            <div className="card-panel" style={{ marginBottom: '30px', padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                <h2 style={{ fontSize: '24px', color: 'var(--color-primario)', margin: '0 0 8px 0' }}>
-                    Panel de Comunicaciones Institucionales
-                </h2>
-                <p style={{ color: 'var(--color-texto-secundario)', margin: 0, fontSize: '15px' }}>
-                    Publica circulares, avisos de emergencia y novedades directo al mural de los cursos.
-                </p>
-            </div>
-
-            {/* Alertas de Feedback */}
+            {/* --- Cabecera del Módulo con Botón Home --- */}
+            <div className="card-panel header-app" style={{ 
+                marginBottom: '30px', 
+                padding: '25px', 
+                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '15px'
+            }}>
+                <div>
+                    <h2 style={{ fontSize: '24px', color: 'var(--color-primario)', margin: '0 0 8px 0' }}>
+                        Panel de Comunicaciones Institucionales
+                    </h2>
+                    <p style={{ color: 'var(--color-texto-secundario)', margin: 0, fontSize: '15px' }}>
+                        Publica circulares, avisos de emergencia y novedades directo al mural general.
+                    </p>
+                </div>
+                
+                <button 
+                    onClick={() => window.location.href = '/home'}
+                    style={{
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
+                        padding: '10px 18px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        height: 'fit-content'
+                    }}
+                    onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        e.currentTarget.style.borderColor = '#94a3b8';
+                    }}
+                    onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                >
+                    <i className="fas fa-home" style={{ color: 'var(--color-primario)' }}></i> 
+                    Menú principal
+                </button>
+            </div> 
+            
+            {/* --- Alertas de Feedback --- */}
             {mensaje.texto && (
                 <div style={{ 
                     padding: '12px 20px', 
@@ -112,7 +143,7 @@ const Comunicaciones = () => {
                 </div>
             )}
 
-            {/* Grid de dos columnas */}
+            {/* --- Grid Principal --- */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '30px', alignItems: 'start' }}>
                 
                 {/* Columna Izquierda: Formulario */}
@@ -147,25 +178,6 @@ const Comunicaciones = () => {
                             />
                         </div>
 
-                        <div>
-                            <label htmlFor="select-curso" style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#4a5568', fontSize: '14px' }}>
-                                Curso Destinatario
-                            </label>
-                            <select
-                                id="select-curso"
-                                value={cursoId}
-                                onChange={(e) => setCursoId(e.target.value)}
-                                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e0', fontSize: '15px', backgroundColor: 'white', outline: 'none' }}
-                            >
-                                <option value="">-- Seleccionar Nivel --</option>
-                                {cursos.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.grado}° {c.letra} ({c.nivel})
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
                         <button type="submit" className="btn-primary" style={{ padding: '12px', fontSize: '16px', fontWeight: 'bold', width: '100%', marginTop: '5px' }}>
                             Publicar en el Mural
                         </button>
@@ -189,12 +201,13 @@ const Comunicaciones = () => {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '550px', overflowY: 'auto', paddingRight: '5px' }}>
-                            {avisos.map((aviso) => {
-                                const cursoRelacionado = cursos.find(c => c.id === aviso.cursoId);
-                                return (
-                                    <div key={aviso.id} className="card-panel" style={{ padding: '20px', position: 'relative', borderLeft: '5px solid var(--color-primario)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                            <h4 style={{ margin: 0, fontSize: '18px', color: '#1a202c', fontWeight: 'bold' }}>{aviso.titulo}</h4>
+                            {avisos.map((aviso) => (
+                                <div key={aviso.id} className="card-panel" style={{ padding: '20px', position: 'relative', borderLeft: '5px solid var(--color-primario)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                        <h4 style={{ margin: 0, fontSize: '18px', color: '#1a202c', fontWeight: 'bold' }}>{aviso.titulo}</h4>
+                                        
+                                        {/* Contenedor de acciones unificadas a la derecha */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <span style={{ 
                                                 fontSize: '12px', 
                                                 fontWeight: 'bold',
@@ -203,17 +216,17 @@ const Comunicaciones = () => {
                                                 backgroundColor: '#ebf8ff', 
                                                 color: '#2b6cb0' 
                                             }}>
-                                                📍 {cursoRelacionado ? `${cursoRelacionado.grado}° ${cursoRelacionado.letra}` : `ID: ${aviso.cursoId}`}
+                                                📍 General
                                             </span>
                                         </div>
-                                        <p style={{ margin: '0 0 10px 0', color: '#4a5568', lineHeight: '1.5', fontSize: '15px' }}>{aviso.contenido}</p>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#a0aec0' }}>
-                                            <span>Emisor: Dirección Académica</span>
-                                            <span>Canal Digital • Vigente</span>
-                                        </div>
                                     </div>
-                                );
-                            })}
+                                    <p style={{ margin: '0 0 10px 0', color: '#4a5568', lineHeight: '1.5', fontSize: '15px' }}>{aviso.contenido}</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#a0aec0' }}>
+                                        <span>Emisor: Dirección Académica</span>
+                                        <span>Canal Digital • Vigente</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
