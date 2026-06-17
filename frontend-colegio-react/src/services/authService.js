@@ -11,8 +11,12 @@ export const login = async (username, password) => {
         if (respuesta && respuesta.token) {
             saveToken(respuesta.token);
             saveUserRole(respuesta.rol || 'ESTUDIANTE');
-            return { 
-                exito: true, 
+
+            localStorage.setItem('usuario_nombre', respuesta.nombre);
+            localStorage.setItem('usuario_id', respuesta.id);
+
+            return {
+                exito: true,
                 rol: respuesta.rol,
                 token: respuesta.token
             };
