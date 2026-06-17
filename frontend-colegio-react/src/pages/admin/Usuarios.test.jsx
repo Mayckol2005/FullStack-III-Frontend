@@ -4,7 +4,6 @@ import Usuarios from './Usuarios';
 
 vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
-
     return {
         ...actual,
         useNavigate: () => vi.fn()
@@ -33,11 +32,10 @@ describe('Usuarios', () => {
     });
 
     test('renderiza usuarios obtenidos del backend', async () => {
-
         obtenerUsuarios.mockResolvedValue([
             {
                 id: 1,
-                rut: '111',
+                rut: '11.111.111-1',
                 nombre: 'Juan',
                 email: 'juan@test.cl',
                 rol: 'PROFESOR'
@@ -46,29 +44,30 @@ describe('Usuarios', () => {
 
         render(<Usuarios />);
 
-        expect(await screen.findByText('Juan'))
-            .toBeInTheDocument();
+        expect(await screen.findByText('Juan')).toBeInTheDocument();
     });
 
     test('permite crear usuario', async () => {
-
         obtenerUsuarios.mockResolvedValue([]);
-
         crearUsuario.mockResolvedValue(true);
 
         render(<Usuarios />);
 
-        const inputs = screen.getAllByRole('textbox');
+        const inputRut = screen.getByPlaceholderText(/RUT/i);
+        const inputNombre = screen.getByPlaceholderText(/Nombre Completo/i);
+        const inputEmail = screen.getByPlaceholderText(/Email Corporativo/i);
 
-        fireEvent.change(inputs[0], {
-            target: { value: '11111111-1' }
+        fireEvent.change(inputRut, {
+            target: { value: '111111111' }
         });
+        
+        expect(inputRut.value).toBe('11.111.111-1');
 
-        fireEvent.change(inputs[1], {
+        fireEvent.change(inputNombre, {
             target: { value: 'Juan Pérez' }
         });
 
-        fireEvent.change(inputs[2], {
+        fireEvent.change(inputEmail, {
             target: { value: 'juan@test.cl' }
         });
 
@@ -93,17 +92,19 @@ describe('Usuarios', () => {
         );
 
         await waitFor(() => {
-            expect(crearUsuario)
-                .toHaveBeenCalledTimes(1);
+            expect(crearUsuario).toHaveBeenCalledTimes(1);
+            expect(crearUsuario).toHaveBeenCalledWith(expect.objectContaining({
+                rut: '11.111.111-1',
+                rol: 'PROFESOR'
+            }));
         });
     });
 
     test('permite iniciar edición y guardar cambios', async () => {
-
         obtenerUsuarios.mockResolvedValue([
             {
                 id: 1,
-                rut: '111',
+                rut: '11.111.111-1',
                 nombre: 'Juan',
                 email: 'juan@test.cl',
                 rol: 'PROFESOR'
@@ -137,22 +138,20 @@ describe('Usuarios', () => {
         fireEvent.click(botonGuardar);
 
         await waitFor(() => {
-            expect(actualizarUsuarioBD)
-                .toHaveBeenCalledWith(
-                    1,
-                    expect.objectContaining({
-                        nombre: 'Juan Editado'
-                    })
-                );
+            expect(actualizarUsuarioBD).toHaveBeenCalledWith(
+                1,
+                expect.objectContaining({
+                    nombre: 'Juan Editado'
+                }
+            ));
         });
     });
 
     test('permite cancelar edición', async () => {
-
         obtenerUsuarios.mockResolvedValue([
             {
                 id: 1,
-                rut: '111',
+                rut: '11.111.111-1',
                 nombre: 'Juan',
                 email: 'juan@test.cl',
                 rol: 'PROFESOR'
@@ -169,9 +168,7 @@ describe('Usuarios', () => {
 
         fireEvent.click(botonEditar);
 
-        expect(
-            screen.getByDisplayValue('Juan')
-        ).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Juan')).toBeInTheDocument();
 
         const botonCancelar = screen
             .getAllByRole('button')
@@ -180,18 +177,15 @@ describe('Usuarios', () => {
         fireEvent.click(botonCancelar);
 
         await waitFor(() => {
-            expect(
-                screen.queryByDisplayValue('Juan')
-            ).not.toBeInTheDocument();
+            expect(screen.queryByDisplayValue('Juan')).not.toBeInTheDocument();
         });
     });
 
     test('permite eliminar usuario', async () => {
-
         obtenerUsuarios.mockResolvedValue([
             {
                 id: 1,
-                rut: '111',
+                rut: '11.111.111-1',
                 nombre: 'Juan',
                 email: 'juan@test.cl',
                 rol: 'PROFESOR'
@@ -211,19 +205,17 @@ describe('Usuarios', () => {
         fireEvent.click(botonEliminar);
 
         await waitFor(() => {
-            expect(eliminarUsuarioBD)
-                .toHaveBeenCalledWith(1);
+            expect(eliminarUsuarioBD).toHaveBeenCalledWith(1);
         });
     });
 
     test('no guarda cambios cuando confirm devuelve false', async () => {
-
         window.confirm.mockReturnValue(false);
 
         obtenerUsuarios.mockResolvedValue([
             {
                 id: 1,
-                rut: '111',
+                rut: '11.111.111-1',
                 nombre: 'Juan',
                 email: 'juan@test.cl',
                 rol: 'PROFESOR'
@@ -246,7 +238,6 @@ describe('Usuarios', () => {
 
         fireEvent.click(botonGuardar);
 
-        expect(actualizarUsuarioBD)
-            .not.toHaveBeenCalled();
+        expect(actualizarUsuarioBD).not.toHaveBeenCalled();
     });
 });
