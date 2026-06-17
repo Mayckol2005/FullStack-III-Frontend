@@ -9,6 +9,10 @@ function Usuarios() {
     const [editandoId, setEditandoId] = useState(null);
     const [tempData, setTempData] = useState({});
     const [nuevoUsuario, setNuevoUsuario] = useState({ rut: '', nombre: '', email: '', password: '', rol: '' });
+    
+    // Nuevo estado para controlar la alerta de éxito
+    const [mensajeExito, setMensajeExito] = useState(false);
+    
     const navigate = useNavigate();
 
     useEffect(() => { cargarDatos(); }, []);
@@ -16,6 +20,36 @@ function Usuarios() {
     const cargarDatos = async () => {
         const data = await obtenerUsuarios();
         setUsuarios(data);
+    };
+
+    // 🇨🇱 Función para formatear el RUT dinámicamente en tiempo real (xx.xxx.xxx-x)
+    const formatearRut = (valor) => {
+        if (!valor) return '';
+        
+        let limpio = valor.replace(/[^0-9kK]/g, '');
+        if (limpio.length === 0) return '';
+
+        let cuerpo = limpio.slice(0, -1);
+        let dv = limpio.slice(-1).toUpperCase();
+
+        if (limpio.length === 1) {
+            return limpio;
+        }
+
+        let cuerpoFormateado = '';
+        while (cuerpo.length > 3) {
+            cuerpoFormateado = '.' + cuerpo.slice(-3) + cuerpoFormateado;
+            cuerpo = cuerpo.slice(0, -3);
+        }
+        cuerpoFormateado = cuerpo + cuerpoFormateado;
+
+        return `${cuerpoFormateado}-${dv}`;
+    };
+
+    const handleRutChange = (e) => {
+        const valorInput = e.target.value;
+        const rutFormateado = formatearRut(valorInput);
+        setNuevoUsuario({ ...nuevoUsuario, rut: rutFormateado });
     };
 
     const iniciarEdicion = (u) => {
@@ -42,20 +76,91 @@ function Usuarios() {
     return (
         <div>
             <div className="dashboard-container" style={{ paddingTop: '10px' }}>
-                <div className="header-app">
+                
+                {/* --- ENCABEZADO --- */}
+                <div className="header-app" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <div>
                         <h1 style={{ margin: 0, color: 'var(--color-primario)', fontSize: '24px' }}>Control de Usuarios</h1>
                         <p style={{ margin: '4px 0 0 0', color: 'var(--color-texto-secundario)' }}>Cuentas de acceso institucionales</p>
                     </div>
+
+                    {/* BOTÓN VOLVER AL HOME */}
+                    <div>
+                        <button 
+                            onClick={() => navigate('/home')}
+                            style={{
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #cbd5e1',
+                                color: '#334155',
+                                padding: '10px 18px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                            }}
+                            onMouseOver={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f1f5f9';
+                                e.currentTarget.style.borderColor = '#94a3b8';
+                            }}
+                            onMouseOut={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f8fafc';
+                                e.currentTarget.style.borderColor = '#cbd5e1';
+                            }}
+                        >
+                            <i className="fas fa-home" style={{ color: 'var(--color-primario)' }}></i> 
+                            Menú principal
+                        </button>
+                    </div>
                 </div>
+
+                {/* --- ALERTA DE ÉXITO --- */}
+                {mensajeExito && (
+                    <div style={{
+                        backgroundColor: '#e6f4ea',
+                        color: '#1e4620',
+                        padding: '12px 20px',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        border: '1px solid #cce8d6',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                    }}>
+                        Usuario creado correctamente
+                    </div>
+                )}
 
                 <div className="card-panel">
                     <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>Registrar Nuevo Personal</h3>
-                    <form onSubmit={async (e) => { e.preventDefault(); if(await crearUsuario(nuevoUsuario)){ cargarDatos(); setNuevoUsuario({ rut: '', nombre: '', email: '', password: '', rol: '' }); } }} 
-                          style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                    <form onSubmit={async (e) => { 
+                        e.preventDefault(); 
+                        if(await crearUsuario(nuevoUsuario)){ 
+                            cargarDatos(); 
+                            setNuevoUsuario({ rut: '', nombre: '', email: '', password: '', rol: '' }); 
+                            // Mostrar alerta y ocultar después de 3 segundos
+                            setMensajeExito(true);
+                            setTimeout(() => {
+                                setMensajeExito(false);
+                            }, 3000);
+                        } 
+                    }} 
+                    style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        
                         <div style={{ flex: 1, minWidth: '150px' }}>
-                            <input type="text" placeholder="RUT (ej: 12345678-9)" value={nuevoUsuario.rut} onChange={e => setNuevoUsuario({...nuevoUsuario, rut: e.target.value})} required className="input-custom" />
+                            <input 
+                                type="text" 
+                                placeholder="RUT (ej: 12.345.678-9)" 
+                                value={nuevoUsuario.rut} 
+                                onChange={handleRutChange} 
+                                maxLength={12} 
+                                required 
+                                className="input-custom" 
+                            />
                         </div>
+
                         <div style={{ flex: 1, minWidth: '150px' }}>
                             <input type="text" placeholder="Nombre Completo" value={nuevoUsuario.nombre} onChange={e => setNuevoUsuario({...nuevoUsuario, nombre: e.target.value})} required className="input-custom" />
                         </div>
@@ -70,7 +175,6 @@ function Usuarios() {
                                 <option value="">Asignar Rol...</option>
                                 <option value="ADMINISTRADOR">ADMINISTRADOR</option>
                                 <option value="PROFESOR">PROFESOR</option>
-                                <option value="ALUMNO">ALUMNO</option>
                             </select>
                         </div>
                         <button type="submit" className="btn-success" style={{ padding: '12px 24px' }}>Guardar</button>
@@ -102,11 +206,9 @@ function Usuarios() {
                                                 <td><input value={tempData.nombre} onChange={e => setTempData({...tempData, nombre: e.target.value})} className="input-custom" style={{ padding: '6px' }} /></td>
                                                 <td><input value={tempData.email} onChange={e => setTempData({...tempData, email: e.target.value})} className="input-custom" style={{ padding: '6px' }} /></td>
                                                 <td>
-                                                    <select value={tempData.rol} onChange={e => setTempData({...tempData, rol: e.target.value})} className="select-custom" style={{ padding: '6px' }}>
-                                                        <option value="ADMINISTRADOR">ADMINISTRADOR</option>
-                                                        <option value="PROFESOR">PROFESOR</option>
-                                                        <option value="ALUMNO">ALUMNO</option>
-                                                    </select>
+                                                    <span className="btn-primary" style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '12px', opacity: 0.75 }}>
+                                                        {tempData.rol}
+                                                    </span>
                                                 </td>
                                             </>
                                         ) : (

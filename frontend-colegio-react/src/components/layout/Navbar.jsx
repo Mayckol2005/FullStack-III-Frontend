@@ -40,8 +40,10 @@ function Navbar() {
                 {/* Links de Admin */}
                 {rol === 'ADMINISTRADOR' && (
                     <>
-                        <Link to="/estudiantes" className="nav-link">Estudiantes</Link>
-                        <Link to="/usuarios" className="nav-link">Usuarios</Link>
+                        <Link to="/admin/usuarios" className="nav-link">Usuarios</Link>
+                        <Link to="/admin/cursos" className="nav-link">Académico</Link>
+                        <Link to="/admin/estudiantes" className="nav-link">Estudiantes</Link>
+                        <Link to="/admin/comunicaciones" className="nav-link">Comunicaciones</Link>
                     </>
                 )}
             </div>

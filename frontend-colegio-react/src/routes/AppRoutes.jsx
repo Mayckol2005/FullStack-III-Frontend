@@ -9,23 +9,90 @@ import { useAuth } from '../hooks/useAuth.js';
 import ProfesorRoutes from '../pages/profesor/ProfesorRoutes.jsx';
 import Estudiantes from '../pages/admin/Estudiantes.jsx';
 import Usuarios from '../pages/admin/Usuarios.jsx';
-import AlumnoRoutes from "../pages/alumno/AlumnoRoutes";
+import AlumnoRoutes from '../pages/alumno/AlumnoRoutes';
+import Cursos from '../pages/admin/Cursos.jsx';
+import Comunicaciones from '../pages/admin/Comunicaciones.jsx';
 
 const AppRoutes = () => {
   const { autenticado, cargando } = useAuth();
+
   if (cargando) return <Loader />;
 
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={!autenticado ? <Login /> : <Navigate to="/home" replace />} />
-      <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
-      <Route path="/profesor/*" element={<RutaProtegida rolRequerido="PROFESOR"><ProfesorRoutes /></RutaProtegida>} />
-      <Route path="/alumno/*" element={<RutaProtegida rolRequerido="ALUMNO"><AlumnoRoutes /></RutaProtegida>}/>
-      <Route path="/admin/estudiantes" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Estudiantes /></RutaProtegida>} />
-      <Route path="/admin/usuarios" element={<RutaProtegida rolRequerido="ADMINISTRADOR"><Usuarios /></RutaProtegida>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+
+      <Route
+        path="/login"
+        element={!autenticado ? <Login /> : <Navigate to="/home" replace />}
+      />
+
+      <Route
+        path="/home"
+        element={
+          <RutaProtegida>
+            <Home />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/profesor/*"
+        element={
+          <RutaProtegida rolRequerido="PROFESOR">
+            <ProfesorRoutes />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/alumno/*"
+        element={
+          <RutaProtegida rolRequerido="ALUMNO">
+            <AlumnoRoutes />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/estudiantes"
+        element={
+          <RutaProtegida rolRequerido="ADMINISTRADOR">
+            <Estudiantes />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/usuarios"
+        element={
+          <RutaProtegida rolRequerido="ADMINISTRADOR">
+            <Usuarios />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/cursos"
+        element={
+          <RutaProtegida rolRequerido="ADMINISTRADOR">
+            <Cursos />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/comunicaciones"
+        element={
+          <RutaProtegida rolRequerido="ADMINISTRADOR">
+            <Comunicaciones />
+          </RutaProtegida>
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   );
 };
+
 export default AppRoutes;
