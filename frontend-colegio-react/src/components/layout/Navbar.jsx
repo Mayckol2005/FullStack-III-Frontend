@@ -33,6 +33,7 @@ function Navbar() {
                         <Link to="/alumno/notas" className="nav-link">📊 Mis Notas</Link>
                         <Link to="/alumno/asistencia" className="nav-link">📅 Mi Asistencia</Link>
                         <Link to="/alumno/anotaciones" className="nav-link">📝 Mis Anotaciones</Link>
+                        <Link to="/alumno/comunicaciones" className="nav-link">📢 Comunicaciones</Link>
                     </>
                 )}
 
