@@ -1,78 +1,166 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {
+    render,
+    screen,
+    waitFor
+} from '@testing-library/react';
+
+import {
+    MemoryRouter
+} from 'react-router-dom';
+
+import {
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi
+} from 'vitest';
+
 import userEvent from '@testing-library/user-event';
+
 import ProfesorDashboard from './ProfesorDashboard';
 
-// 1. Mockeamos el servicio para que no haga peticiones reales
+import {
+    obtenerAsignaturasPorDocente,
+    obtenerAvisosInstitucionales
+} from '../../services/profesorService';
+
 vi.mock('../../services/profesorService', () => ({
-    obtenerAvisosInstitucionales: vi.fn(() => Promise.resolve([]))
+    obtenerAsignaturasPorDocente: vi.fn(),
+    obtenerAvisosInstitucionales: vi.fn()
 }));
 
-// 2. Mockeamos la navegación para poder verificar hacia dónde intenta ir el usuario
 const mockNavigate = vi.fn();
+
 vi.mock('react-router-dom', async () => {
-    const actual = await vi.importActual('react-router-dom');
+    const actual = await vi.importActual(
+        'react-router-dom'
+    );
+
     return {
         ...actual,
         useNavigate: () => mockNavigate
     };
 });
 
-describe('ProfesorDashboard', () => {
-    
-    // Limpiamos los mocks antes de cada test para que no interfieran entre sí
+const renderizarDashboardYEsperarCarga = async () => {
+    render(
+        <MemoryRouter>
+            <ProfesorDashboard />
+        </MemoryRouter>
+    );
+
+    await waitFor(() => {
+        expect(
+            screen.queryByText(
+                /Cargando comunicados/i
+            )
+        ).not.toBeInTheDocument();
+
+        expect(
+            screen.queryByText(
+                /Cargando contexto académico/i
+            )
+        ).not.toBeInTheDocument();
+    });
+};
+
+describe('ProfesorDashboard - navegación docente', () => {
+
     beforeEach(() => {
         vi.clearAllMocks();
-    });
 
-    it('debe renderizar banner docente', async () => {
-        render(
-            <MemoryRouter>
-                <ProfesorDashboard />
-            </MemoryRouter>
+        localStorage.setItem(
+            'usuario_id',
+            '10'
         );
 
-        // Esperamos a que el useEffect termine su trabajo
-        await waitFor(() => {
-            expect(screen.queryByText(/Cargando comunicados/i)).not.toBeInTheDocument();
-        });
+        localStorage.setItem(
+            'usuario_nombre',
+            'Juan Pérez'
+        );
 
-        // Ahora hacemos las aserciones
-        expect(screen.getByText(/Mural de Novedades/i)).toBeInTheDocument();
-        expect(screen.getByText(/Acceso Rápido/i)).toBeInTheDocument();
+        obtenerAsignaturasPorDocente.mockResolvedValue(
+            []
+        );
+
+        obtenerAvisosInstitucionales.mockResolvedValue(
+            []
+        );
+    });
+
+    it('debe renderizar el panel principal del docente', async () => {
+        await renderizarDashboardYEsperarCarga();
+
+        expect(
+            screen.getByText(
+                /Mural de Novedades/i
+            )
+        ).toBeInTheDocument();
+
+        expect(
+            screen.getByText(
+                /Acceso Rápido/i
+            )
+        ).toBeInTheDocument();
+
+        expect(
+            obtenerAsignaturasPorDocente
+        ).toHaveBeenCalledWith(10);
+
+        expect(
+            obtenerAvisosInstitucionales
+        ).toHaveBeenCalledTimes(1);
     });
 
     it('debe navegar a asistencia', async () => {
-        render(<MemoryRouter><ProfesorDashboard /></MemoryRouter>);
-        
-        await waitFor(() => expect(screen.queryByText(/Cargando comunicados/i)).not.toBeInTheDocument());
+        const user = userEvent.setup();
 
-        const btnAsistencia = screen.getByText(/Pasar Lista Diaria/i);
-        await userEvent.click(btnAsistencia);
-        
-        expect(mockNavigate).toHaveBeenCalledWith('/profesor/asistencia');
+        await renderizarDashboardYEsperarCarga();
+
+        await user.click(
+            screen.getByRole('button', {
+                name: /Pasar Lista Diaria/i
+            })
+        );
+
+        expect(mockNavigate)
+            .toHaveBeenCalledWith(
+                '/profesor/asistencia'
+            );
     });
 
     it('debe navegar a anotaciones', async () => {
-        render(<MemoryRouter><ProfesorDashboard /></MemoryRouter>);
-        
-        await waitFor(() => expect(screen.queryByText(/Cargando comunicados/i)).not.toBeInTheDocument());
+        const user = userEvent.setup();
 
-        const btnAnotacion = screen.getByText(/Registrar Observación/i);
-        await userEvent.click(btnAnotacion);
-        
-        expect(mockNavigate).toHaveBeenCalledWith('/profesor/anotaciones');
+        await renderizarDashboardYEsperarCarga();
+
+        await user.click(
+            screen.getByRole('button', {
+                name: /Registrar Observación/i
+            })
+        );
+
+        expect(mockNavigate)
+            .toHaveBeenCalledWith(
+                '/profesor/anotaciones'
+            );
     });
 
     it('debe navegar a evaluaciones', async () => {
-        render(<MemoryRouter><ProfesorDashboard /></MemoryRouter>);
-        
-        await waitFor(() => expect(screen.queryByText(/Cargando comunicados/i)).not.toBeInTheDocument());
+        const user = userEvent.setup();
 
-        const btnEvaluacion = screen.getByText(/Ingresar Calificaciones/i);
-        await userEvent.click(btnEvaluacion);
-        
-        expect(mockNavigate).toHaveBeenCalledWith('/profesor/evaluaciones');
+        await renderizarDashboardYEsperarCarga();
+
+        await user.click(
+            screen.getByRole('button', {
+                name: /Ingresar Calificaciones/i
+            })
+        );
+
+        expect(mockNavigate)
+            .toHaveBeenCalledWith(
+                '/profesor/evaluaciones'
+            );
     });
 });
