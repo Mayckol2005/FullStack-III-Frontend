@@ -1,117 +1,249 @@
-# Frontend - Plataforma Colegio Bernardo O’Higgins
+# Colegio Bernardo O'Higgins — Frontend Plataforma de Gestión Escolar
 
-Frontend desarrollado en React para la plataforma de gestión escolar del Colegio Bernardo O’Higgins.  
-Este proyecto forma parte de una arquitectura basada en microservicios desarrollados con Spring Boot y autenticación mediante JWT.
+![React](https://img.shields.io/badge/React-19.2.5-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8.0.10-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-4.1.7-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+
+Frontend web de la plataforma de gestión escolar del **Colegio Bernardo O'Higgins**, desarrollado con React y Vite.
+
+La aplicación proporciona una vista pública institucional y módulos privados asociados a los distintos roles de la comunidad educativa. El frontend consume servicios REST del ecosistema backend mediante el API Gateway y utiliza autenticación basada en JWT.
 
 ---
 
-# Descripción del proyecto
+# Integrantes
 
-La aplicación frontend permite interactuar con los distintos microservicios del ecosistema académico mediante una interfaz web moderna y modular.
-
-El sistema fue desarrollado utilizando React + Vite y consume APIs REST protegidas mediante tokens JWT.
-
-Actualmente el frontend incorpora funcionalidades de:
-
-- Inicio de sesión de usuarios.
-- Protección de rutas privadas.
-- Gestión de usuarios.
-- Consumo de APIs REST.
-- Manejo de autenticación JWT.
-- Control de acceso basado en roles.
-- Navegación mediante React Router DOM.
+- Martín Baza
+- Mayckol Mardones
+- Francisco Vera
 
 ---
 
 # Objetivo del frontend
 
-Desarrollar una interfaz web moderna y segura que permita consumir los microservicios del sistema académico del Colegio Bernardo O’Higgins, facilitando la administración institucional mediante una experiencia rápida, organizada y escalable.
+Desarrollar una interfaz web modular que permita a estudiantes, profesores y personal administrativo interactuar con los procesos académicos del establecimiento.
+
+El frontend centraliza la experiencia de usuario de la plataforma y se comunica con una arquitectura backend distribuida basada en microservicios.
+
+Entre los procesos contemplados se encuentran:
+
+- Autenticación de usuarios.
+- Navegación protegida según rol.
+- Gestión académica.
+- Registro de evaluaciones.
+- Control de asistencia.
+- Gestión de anotaciones.
+- Consulta de información estudiantil.
+- Comunicaciones institucionales.
+- Administración de usuarios y estudiantes.
+- Acceso a información pública del establecimiento.
 
 ---
 
-# Tecnologías utilizadas
+# Funcionalidades implementadas
 
-| Tecnología | Uso |
-|---|---|
-| React 19 | Construcción de interfaz de usuario |
-| Vite | Entorno de desarrollo y build |
-| JavaScript ES6+ | Desarrollo frontend |
-| CSS3 | Estilos personalizados |
-| React Router DOM | Navegación entre vistas |
-| Fetch API | Consumo de APIs REST |
-| ESLint | Estandarización de código |
-| JWT | Autenticación y autorización |
-| LocalStorage | Persistencia de sesión |
+## Vista pública institucional
+
+La ruta pública principal presenta información institucional del Colegio Bernardo O'Higgins y permite acceder al portal educativo.
+
+Incluye:
+
+- Identidad institucional del establecimiento.
+- Información de Educación Básica y Educación Media.
+- Hero principal con imagen del colegio.
+- Presentación del proyecto educativo.
+- Información sobre los niveles educativos.
+- Sección de Admisión Escolar 2027.
+- Información sobre apoyo al estudiante.
+- Programa de Integración Escolar.
+- Convivencia Escolar.
+- Acompañamiento formativo.
+- Documentos institucionales en formato PDF.
+- Proyecto Educativo Institucional.
+- Manual y Protocolos de Convivencia Escolar.
+- Reglamento Interno Escolar.
+- Información de ubicación y contacto.
+- Integración visual con Google Maps.
+- Acceso a Instagram y Facebook institucionales.
+- Acceso al portal educativo.
 
 ---
 
-# Dependencias principales
+## Autenticación
 
-## Producción
+La aplicación implementa autenticación mediante JWT.
 
-```json
-"dependencies": {
-  "react": "^19.2.5",
-  "react-dom": "^19.2.5",
-  "react-router-dom": "^7.15.0"
-}
+El proceso considera:
+
+1. El usuario ingresa sus credenciales.
+2. El frontend envía la solicitud de autenticación al backend.
+3. `auth-service` valida las credenciales.
+4. El backend genera un token JWT.
+5. El frontend almacena la información necesaria para mantener la sesión.
+6. Las solicitudes protegidas incorporan el token en el encabezado `Authorization`.
+
+Ejemplo:
+
+```http
+Authorization: Bearer <token>
 ```
 
+La aplicación permite además cerrar la sesión y eliminar los datos de autenticación almacenados localmente.
+
 ---
 
-## Desarrollo
+## Protección de rutas
 
-```json
-"devDependencies": {
-  "@eslint/js": "^10.0.1",
-  "@types/react": "^19.2.14",
-  "@types/react-dom": "^19.2.3",
-  "@vitejs/plugin-react": "^6.0.1",
-  "eslint": "^10.2.1",
-  "eslint-plugin-react-hooks": "^7.1.1",
-  "eslint-plugin-react-refresh": "^0.5.2",
-  "globals": "^17.5.0",
-  "vite": "^8.0.10"
-}
-```
+Las vistas privadas se encuentran protegidas mediante componentes de control de acceso.
+
+La aplicación valida:
+
+- Existencia de una sesión autenticada.
+- Token disponible.
+- Rol del usuario.
+- Acceso permitido a la ruta solicitada.
+
+Cuando un usuario intenta acceder a una vista sin cumplir los requisitos de autorización, es redirigido al flujo correspondiente.
+
+---
+
+## Módulo Profesor
+
+El módulo Profesor permite gestionar procesos académicos asociados a los cursos y asignaturas del docente autenticado.
+
+### Dashboard del profesor
+
+Presenta información del profesor y sus asignaciones académicas.
+
+Permite acceder a:
+
+- Evaluaciones.
+- Asistencia.
+- Anotaciones.
+
+---
+
+### Evaluaciones
+
+La vista de evaluaciones permite:
+
+- Seleccionar un curso.
+- Seleccionar una asignatura.
+- Consultar la nómina de estudiantes.
+- Registrar calificaciones N1, N2 y N3.
+- Recuperar evaluaciones previamente almacenadas.
+- Sincronizar calificaciones con el backend.
+- Visualizar promedios calculados a partir de las evaluaciones.
+
+El flujo se integra con los servicios académicos y de evaluaciones mediante el API Gateway.
+
+---
+
+### Asistencia
+
+La vista de asistencia permite:
+
+- Seleccionar un curso.
+- Seleccionar una fecha.
+- Obtener la nómina de estudiantes.
+- Recuperar asistencia previamente registrada.
+- Marcar el estado de asistencia de cada estudiante.
+- Guardar la lista completa del curso.
+- Recargar la información persistida desde el backend.
+
+---
+
+### Anotaciones
+
+La vista de anotaciones permite:
+
+- Seleccionar un curso.
+- Consultar estudiantes.
+- Acceder a la hoja de vida de un estudiante.
+- Registrar anotaciones positivas.
+- Registrar anotaciones negativas.
+- Consultar el historial de anotaciones.
+- Visualizar indicadores de anotaciones positivas y negativas.
+- Ordenar el historial desde los registros más recientes.
+
+---
+
+## Módulo Administrador
+
+La plataforma contempla vistas administrativas para la gestión institucional.
+
+Entre las funcionalidades presentes se encuentran:
+
+- Gestión de usuarios.
+- Gestión de estudiantes.
+- Gestión de cursos.
+- Comunicaciones institucionales.
+
+Las operaciones disponibles dependen de la autorización del usuario y de los servicios backend asociados.
+
+---
+
+## Módulo Estudiante
+
+El módulo Estudiante permite consultar información académica personal.
+
+Incluye vistas para:
+
+- Dashboard del estudiante.
+- Mis notas.
+- Mi asistencia.
+- Mis anotaciones.
+- Comunicaciones.
 
 ---
 
 # Arquitectura del frontend
 
-El proyecto sigue una arquitectura modular basada en separación de responsabilidades.
+El proyecto utiliza una organización modular basada en separación de responsabilidades.
 
-## Estructura general
-
-```bash
+```txt
 frontend-colegio-react/
 │
 ├── public/
-│   ├── favicon.svg
-│   └── icons.svg
 │
 ├── src/
+│   ├── api/
+│   │   ├── apiClient.js
+│   │   └── apiClient.test.js
+│   │
 │   ├── assets/
-│   │   ├── hero.png
-│   │   ├── react.svg
-│   │   └── vite.svg
+│   │   ├── documents/
+│   │   ├── images/
+│   │   └── logos/
 │   │
 │   ├── components/
-│   │   └── RutaProtegida.jsx
+│   │   ├── common/
+│   │   ├── layout/
+│   │   ├── profesor/
+│   │   ├── public/
+│   │   └── ui/
+│   │
+│   ├── hooks/
 │   │
 │   ├── pages/
-│   │   ├── Login.jsx
-│   │   └── Usuarios.jsx
+│   │   ├── admin/
+│   │   ├── alumno/
+│   │   ├── profesor/
+│   │   ├── public/
+│   │   └── shared/
+│   │
+│   ├── routes/
 │   │
 │   ├── services/
-│   │   ├── authService.js
-│   │   └── usuarioService.js
 │   │
 │   ├── styles/
-│   │   └── estilos.css
+│   │
+│   ├── utils/
 │   │
 │   ├── App.jsx
-│   └── main.jsx
+│   ├── App.test.jsx
+│   ├── main.jsx
+│   └── setupTests.js
 │
 ├── package.json
 ├── vite.config.js
@@ -120,317 +252,293 @@ frontend-colegio-react/
 
 ---
 
-# Patrones de diseño implementados
+# Organización por responsabilidades
 
-Durante el desarrollo del frontend se aplicaron distintos patrones de diseño para asegurar mantenibilidad, reutilización y escalabilidad.
+| Directorio | Responsabilidad |
+|---|---|
+| `api/` | Cliente HTTP común y comunicación base con las APIs |
+| `assets/` | Imágenes, logotipos y documentos institucionales |
+| `components/` | Componentes reutilizables |
+| `hooks/` | Hooks personalizados de React |
+| `pages/` | Vistas organizadas por módulo y rol |
+| `routes/` | Configuración de navegación |
+| `services/` | Comunicación con los servicios backend |
+| `styles/` | Estilos globales de la aplicación |
+| `utils/` | Utilidades de autenticación, storage y formato |
 
 ---
 
-# 1. Service Pattern
+# Stack tecnológico
 
-Implementado en:
+## Frontend
 
-```bash
+- React 19.
+- Vite 8.
+- JavaScript ES6+.
+- CSS3.
+- React Router DOM.
+
+## Comunicación HTTP
+
+- Fetch API.
+- APIs REST.
+- API Gateway.
+
+## Seguridad
+
+- JWT.
+- Control de acceso basado en roles.
+- Rutas protegidas.
+- Persistencia local de sesión.
+
+## Testing
+
+- Vitest.
+- Testing Library.
+- Jest DOM.
+- Mocks y spies para dependencias y APIs.
+
+## Calidad de código
+
+- ESLint.
+- Separación de responsabilidades.
+- Componentes reutilizables.
+- Servicios desacoplados de las vistas.
+
+## Control de versiones
+
+- Git.
+- GitHub.
+- GitHub Flow.
+
+---
+
+# Patrones y organización implementados
+
+## Service Pattern
+
+La lógica de comunicación con APIs se encuentra separada de los componentes visuales.
+
+Los servicios se ubican en:
+
+```txt
 src/services/
 ```
 
-Archivos:
+Ejemplos:
 
-- authService.js
-- usuarioService.js
+```txt
+authService.js
+usuarioService.js
+estudianteService.js
+academicoService.js
+profesorService.js
+comunicacionService.js
+```
 
-## Objetivo
+Esta separación permite:
 
-Separar la lógica de consumo de APIs de la lógica visual de los componentes React.
+- Reutilizar llamadas HTTP.
+- Evitar lógica de infraestructura en los componentes.
+- Facilitar pruebas unitarias.
+- Mantener centralizada la comunicación con el backend.
 
-## Beneficios
+---
 
-- Código más mantenible.
-- Reutilización de llamadas HTTP.
-- Componentes más limpios.
-- Mejor organización del proyecto.
-- Facilita cambios futuros en endpoints.
+## API Client
 
-## Ejemplo
+La aplicación dispone de un cliente HTTP común en:
 
-```javascript
-export const obtenerUsuarios = async () => {
-    const res = await fetch(API_URL, {
-        headers: obtenerCabeceras()
-    });
+```txt
+src/api/apiClient.js
+```
 
-    return await res.json();
-};
+Este componente centraliza aspectos comunes de las solicitudes y facilita el consumo de endpoints protegidos.
+
+---
+
+## Component-Based Architecture
+
+La interfaz se divide en componentes reutilizables.
+
+Ejemplos:
+
+```txt
+components/common/
+components/layout/
+components/profesor/
+components/public/
+components/ui/
+```
+
+Esta organización permite aislar responsabilidades visuales y reutilizar componentes en distintas vistas.
+
+---
+
+## Protected Route Pattern
+
+Las rutas privadas utilizan un componente de protección encargado de verificar autenticación y autorización.
+
+Ubicación:
+
+```txt
+src/components/common/RutaProtegida.jsx
+```
+
+El patrón permite restringir vistas de acuerdo con el rol disponible en la sesión.
+
+---
+
+## Custom Hooks
+
+La aplicación utiliza hooks personalizados para encapsular lógica reutilizable asociada al estado y autenticación.
+
+Ejemplo:
+
+```txt
+src/hooks/useAuth.js
 ```
 
 ---
 
-# 2. Component-Based Architecture
+# Comunicación con el backend
 
-Implementado mediante componentes reutilizables React.
+El frontend forma parte de una plataforma distribuida basada en microservicios Spring Boot.
 
-## Objetivo
+El flujo principal de comunicación es:
 
-Separar funcionalidades en componentes independientes y reutilizables.
+```txt
+React
+  │
+  ▼
+API Gateway
+  │
+  ├── Auth Service
+  ├── Usuario Service
+  ├── Estudiante Service
+  ├── Académico Service
+  ├── Evaluación Service
+  ├── Asistencia Service
+  ├── Anotación Service
+  ├── Comunicación Service
+  └── Reporte Service
+```
 
-## Beneficios
+El API Gateway constituye el punto central de entrada hacia el ecosistema backend.
 
-- Escalabilidad.
-- Reutilización.
-- Mantenimiento más sencillo.
-- Separación clara de responsabilidades.
+Durante la ejecución local, el Gateway se encuentra disponible en:
 
-## Ejemplo
-
-```bash
-components/RutaProtegida.jsx
+```txt
+http://localhost:8080
 ```
 
 ---
 
-# 3. Protected Route Pattern
+# Seguridad y sesión
 
-Implementado en:
+La sesión utiliza información almacenada en el navegador para conservar el estado de autenticación.
 
-```bash
-RutaProtegida.jsx
-```
+Entre las utilidades implementadas se encuentran funciones para:
 
-## Objetivo
+- Guardar el token.
+- Recuperar el token.
+- Eliminar el token.
+- Guardar el rol del usuario.
+- Recuperar la información de autenticación.
+- Validar el acceso a rutas.
 
-Restringir acceso a vistas privadas cuando el usuario no se encuentra autenticado o no posee el rol adecuado.
-
-## Funcionamiento
-
-El componente:
-
-- Verifica existencia del token JWT.
-- Verifica rol del usuario.
-- Redirecciona automáticamente al login si no cumple los permisos.
-
-## Ejemplo
+Las solicitudes protegidas utilizan JWT en los encabezados HTTP.
 
 ```javascript
-if (!token) {
-    return <Navigate to="/login" replace />;
+{
+  Authorization: `Bearer ${token}`
 }
 ```
 
-## Beneficios
-
-- Seguridad.
-- Protección de rutas privadas.
-- Control de acceso por roles.
-- Mejor experiencia de navegación.
-
 ---
 
-# Buenas prácticas implementadas
+# Testing y calidad de software
 
-## Separación de responsabilidades
+La aplicación utiliza Vitest y Testing Library para validar componentes, páginas, servicios, hooks, utilidades y navegación.
 
-- Pages → Vistas principales.
-- Services → Lógica HTTP.
-- Components → Componentes reutilizables.
-- Styles → Estilos separados.
+La suite contempla pruebas para:
 
----
+- Autenticación.
+- Cliente HTTP.
+- Servicios.
+- Rutas.
+- Rutas protegidas.
+- Componentes reutilizables.
+- Landing pública.
+- Login.
+- Módulo Administrador.
+- Módulo Profesor.
+- Módulo Estudiante.
+- Hooks.
+- Utilidades de sesión.
+- Formateadores.
 
-## Código modular
+## Última validación registrada
 
-Cada funcionalidad fue organizada en carpetas específicas para facilitar el mantenimiento y escalabilidad.
+```txt
+Test Files  40 passed (40)
+Tests       205 passed (205)
+```
 
----
+Las pruebas focalizadas de la vista pública registraron:
 
-## Uso de ESLint
+```txt
+HeroBanner.test.jsx     4 passed
+LandingPage.test.jsx    9 passed
 
-Se incorporó ESLint para mantener un estándar de código consistente y detectar errores durante el desarrollo.
-
----
-
-## Persistencia de sesión
-
-La autenticación se mantiene utilizando LocalStorage:
-
-```javascript
-localStorage.setItem('token_colegio', datos.token);
-localStorage.setItem('usuario_rol', datos.rol);
+Tests                  13 passed
 ```
 
 ---
 
-## Manejo de rutas
+# Build de producción
 
-Se utilizó React Router DOM para gestionar la navegación de forma dinámica entre vistas.
+La aplicación fue validada mediante el proceso de build de Vite.
 
----
-
-# Funcionalidades implementadas
-
-# Login de usuarios
-
-Vista encargada de autenticar usuarios mediante JWT.
-
-## Funciones
-
-- Inicio de sesión.
-- Validación de credenciales.
-- Obtención de token JWT.
-- Persistencia de sesión.
-- Almacenamiento de rol.
-
-## Endpoint consumido
-
-```http
-POST http://localhost:8090/api/auth/login
-```
-
----
-
-# Gestión de usuarios
-
-Vista encargada de consumir el microservicio Usuario.
-
-## Operaciones implementadas
-
-- Obtener usuarios.
-- Crear usuarios.
-- Editar usuarios.
-- Eliminar usuarios.
-- Cerrar sesión.
-
-## Endpoints consumidos
-
-```http
-GET    /api/usuarios
-POST   /api/usuarios/crear
-PUT    /api/usuarios/{id}
-DELETE /api/usuarios/{id}
-```
-
----
-
-# Protección de rutas
-
-Implementada mediante:
+Comando:
 
 ```bash
-RutaProtegida.jsx
+npm run build
 ```
 
-## Rol requerido
+Última validación registrada:
 
-Actualmente la ruta:
+```txt
+vite v8.0.10 building client environment for production...
 
-```bash
-/usuarios
+63 modules transformed
+
+✓ built
 ```
 
-solo puede ser accedida por usuarios con rol:
+El proceso de build incluye los recursos utilizados por la landing pública, entre ellos:
 
-```bash
-ADMINISTRADOR
-```
-
----
-
-# Comunicación con backend
-
-Este frontend consume una arquitectura backend basada en microservicios desarrollados con Spring Boot.
-
-## Servicios conectados
-
-- API Gateway
-- Eureka Server
-- Config Server
-- Auth Service
-- Usuario Service
-- Académico Service
-- Estudiantes Service
-- Evaluaciones Service
-- Reporte Service (BFF)
-
----
-
-# Patrón arquitectónico utilizado
-
-# Arquitectura de Microservicios
-
-El frontend consume servicios desacoplados e independientes.
-
-## Beneficios
-
-- Escalabilidad.
-- Despliegue independiente.
-- Mejor mantenibilidad.
-- Separación de dominios.
-- Mayor modularidad.
-
----
-
-# Patrón BFF (Backend For Frontend)
-
-El sistema utiliza un Backend For Frontend para consolidar información proveniente de múltiples microservicios.
-
-## Beneficios
-
-- Reduce llamadas desde frontend.
-- Optimiza rendimiento.
-- Centraliza agregación de datos.
-- Simplifica consumo de información.
-
----
-
-# Estrategia de branching utilizada
-
-El equipo utilizó GitHub Flow para el control de versiones.
-
-## Flujo utilizado
-
-- main → Rama principal estable.
-- feature/* → Desarrollo de funcionalidades.
-- Pull Requests → Integración de cambios.
-- Merge → Integración validada.
-
----
-
-## Ejemplos de ramas
-
-```bash
-feature/login-react
-feature/rutas-protegidas
-feature/usuarios-crud
-feature/auth-service
-```
-
----
-
-## Beneficios obtenidos
-
-- Trabajo colaborativo simultáneo.
-- Prevención de conflictos.
-- Mejor trazabilidad.
-- Mayor estabilidad del proyecto.
+- Imagen institucional del establecimiento.
+- Logotipo del colegio.
+- Proyecto Educativo Institucional.
+- Manual y Protocolos de Convivencia Escolar.
+- Reglamento Interno Escolar.
 
 ---
 
 # Instalación del proyecto
 
-## 1. Clonar repositorio
+## 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/Mayckol2005/FullStack-III-Frontend.git
 ```
 
----
-
 ## 2. Ingresar al proyecto
 
 ```bash
-cd frontend-colegio-react
+cd FullStack-III-Frontend/frontend-colegio-react
 ```
-
----
 
 ## 3. Instalar dependencias
 
@@ -438,19 +546,15 @@ cd frontend-colegio-react
 npm install
 ```
 
----
-
-## 4. Ejecutar entorno de desarrollo
+## 4. Ejecutar el entorno de desarrollo
 
 ```bash
 npm run dev
 ```
 
----
+La aplicación estará disponible, de forma predeterminada, en:
 
-# URL local
-
-```bash
+```txt
 http://localhost:5173
 ```
 
@@ -464,9 +568,21 @@ http://localhost:5173
 npm run dev
 ```
 
-Inicia servidor de desarrollo Vite.
+Inicia el servidor de desarrollo de Vite.
 
----
+## Testing
+
+```bash
+npm test -- --run
+```
+
+Ejecuta la suite completa de pruebas.
+
+También es posible ejecutar pruebas focalizadas:
+
+```bash
+npx vitest run src/components/public/HeroBanner.test.jsx src/pages/public/LandingPage.test.jsx
+```
 
 ## Build de producción
 
@@ -474,37 +590,86 @@ Inicia servidor de desarrollo Vite.
 npm run build
 ```
 
-Genera versión optimizada para producción.
+Genera los archivos optimizados para producción.
 
----
-
-## Preview de producción
+## Preview
 
 ```bash
 npm run preview
 ```
 
-Permite visualizar la build final localmente.
+Permite visualizar localmente el resultado del build.
 
----
-
-## Linter
+## ESLint
 
 ```bash
 npm run lint
 ```
 
-Ejecuta ESLint para validar calidad y estandarización del código.
+Ejecuta el análisis estático configurado para el proyecto.
 
 ---
 
 # Requisitos
 
-- Node.js v18 o superior
-- npm v9 o superior
-- Backend ejecutándose
-- API Gateway activo
-- Microservicios activos
+- Node.js.
+- npm.
+- Backend del proyecto disponible.
+- API Gateway operativo.
+- Microservicios necesarios registrados y disponibles.
+
+Para levantar el ecosistema backend completo se debe consultar el repositorio correspondiente.
+
+---
+
+# Estrategia de branching
+
+El equipo utiliza **GitHub Flow**.
+
+| Rama | Propósito |
+|---|---|
+| `main` | Rama estable e integrada |
+| `feat/*` | Desarrollo de nuevas funcionalidades |
+| `docs/*` | Cambios de documentación |
+
+El flujo de integración utilizado es:
+
+```txt
+main
+  │
+  └── rama de trabajo
+          │
+          ├── commits
+          ├── push
+          └── Pull Request
+                    │
+                    ▼
+                   main
+```
+
+Los cambios se integran mediante Pull Requests una vez revisados y validados.
+
+---
+
+# Estado actual
+
+- [x] Vista pública institucional.
+- [x] Landing responsive.
+- [x] Admisión Escolar 2027.
+- [x] Documentos institucionales.
+- [x] Google Maps.
+- [x] Autenticación JWT.
+- [x] Rutas protegidas.
+- [x] Navegación por roles.
+- [x] Módulo Administrador.
+- [x] Módulo Profesor.
+- [x] Módulo Estudiante.
+- [x] Evaluaciones.
+- [x] Asistencia.
+- [x] Anotaciones.
+- [x] Comunicaciones.
+- [x] Suite automatizada de pruebas.
+- [x] Build de producción validado.
 
 ---
 
@@ -514,28 +679,14 @@ Ejecuta ESLint para validar calidad y estandarización del código.
 
 https://github.com/Mayckol2005/FullStack-III-Frontend
 
----
-
 ## Backend
 
 https://github.com/Mayckol2005/FullStack-III
 
 ---
 
-# Integrantes
-
-- Martín Baza
-- Mayckol Mardones
-- Francisco Vera
-
----
-
 # Asignatura
 
-Desarrollo Fullstack III
+**Desarrollo Fullstack III**
 
----
-
-# Profesor
-
-Marcelo Crisostomo
+Profesor: **Marcelo Crisostomo**
