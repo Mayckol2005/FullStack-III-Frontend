@@ -4,117 +4,358 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import LandingPage from './LandingPage.jsx';
 
-// Mocks globales de simulación de comportamiento del navegador
 window.scrollTo = vi.fn();
 Element.prototype.scrollIntoView = vi.fn();
 
-const renderComponent = () => {
-  return render(
+const renderComponent = () =>
+  render(
     <BrowserRouter>
       <LandingPage />
     </BrowserRouter>
   );
-};
 
-describe('Página Pública: LandingPage (Blindaje Completo)', () => {
+describe('Página Pública: LandingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('debe renderizar correctamente toda la identidad institucional, secciones y footer', () => {
+  it('renderiza la identidad institucional y las secciones principales', () => {
     renderComponent();
 
-    // Títulos Principales
-    expect(screen.getByRole('heading', { name: "Colegio Bernardo O'Higgins", level: 1 })).toBeInTheDocument();
-    expect(screen.getByText('Bienvenidos a la Comunidad CBO')).toBeInTheDocument();
-    
-    // Paneles informativos intermedios
-    expect(screen.getByText('🏫 Nuestro Proyecto Educativo')).toBeInTheDocument();
-    expect(screen.getByText('🎯 Misión Institucional')).toBeInTheDocument();
-    expect(screen.getByText('👁️ Visión del Futuro')).toBeInTheDocument();
-    expect(screen.getByText('Proceso de Admisión Escolar 2026')).toBeInTheDocument();
-    expect(screen.getByText('🎓 Ciclos Formativos')).toBeInTheDocument();
-    expect(screen.getByText('👥 Nuestros Equipos del Establecimiento')).toBeInTheDocument();
-    
-    // Estamentos del footer y descargas
-    expect(screen.getByText('📄 Normativas & Descargas')).toBeInTheDocument();
-    expect(screen.getByText('🤝 Estamentos Escolares')).toBeInTheDocument();
-    expect(screen.getByText('Contacto Oficial')).toBeInTheDocument();
-    expect(screen.getByText('✉️ asistente.cbo@gmail.com')).toBeInTheDocument();
-    expect(screen.getByText('📞 +56 9 5776 5581 (Dirección)')).toBeInTheDocument();
-    expect(screen.getByText('Ubicación Física')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        name: "Colegio Bernardo O'Higgins",
+        level: 1,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getAllByText('Hualpén · Región del Biobío')
+    ).toHaveLength(2);
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Nuestro proyecto educativo',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Nuestros niveles educativos',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Educación Básica',
+        level: 3,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Educación Media',
+        level: 3,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Admisión Escolar 2027',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Apoyo al estudiante',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Documentos del colegio',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Comunidad educativa',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Ubicación y contacto',
+        level: 2,
+      })
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Estamos en Hualpén',
+        level: 3,
+      })
+    ).toBeInTheDocument();
   });
 
-  it('debe accionar window.scrollTo al hacer clic en el botón Inicio del menú', () => {
+  it('mantiene una identidad coherente con Hualpén y Educación Básica y Media', () => {
     renderComponent();
-    
-    const botonInicio = screen.getByRole('button', { name: 'Inicio' });
-    fireEvent.click(botonInicio);
-    
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+
+    expect(
+      screen.getByText('1° A 8° BÁSICO')
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText('1° A 4° MEDIO')
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText('Irlanda 3260, Hualpén')
+    ).toBeInTheDocument();
+
+    expect(
+      screen.queryByText(/Puerto Montt/i)
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(/Pre-Kinder/i)
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(/Kinder/i)
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByText(/Liceo Bernardo O'Higgins/i)
+    ).not.toBeInTheDocument();
   });
 
-  it('debe accionar window.scrollTo al hacer clic en el botón Inicio Principal del footer', () => {
+  it('ejecuta window.scrollTo al hacer clic en Inicio', () => {
     renderComponent();
-    
-    const botonInicioFooter = screen.getByRole('button', { name: 'Inicio Principal' });
-    fireEvent.click(botonInicioFooter);
-    
-    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Inicio',
+      })
+    );
+
+    expect(window.scrollTo).toHaveBeenCalledTimes(1);
+
+    expect(window.scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'smooth',
+    });
   });
 
-  it('debe disparar scrollIntoView de forma exitosa en todos los botones de navegación SPA internos', () => {
+  it('navega mediante scroll hacia las secciones públicas internas', () => {
     renderComponent();
 
-    // Simulamos que las secciones con id existen en el DOM de pruebas para que document.getElementById no retorne null
-    const ids = ['colegio', 'ciclos', 'equipos', 'normativas', 'admision'];
-    const elementosCreados = ids.map(id => {
-      const el = document.createElement('div');
-      el.id = id;
-      document.body.appendChild(el);
-      return el;
+    const botonesNavegacion = [
+      'Nuestro Colegio',
+      'Niveles',
+      'Apoyo',
+      'Documentos',
+      'Admisión',
+    ];
+
+    botonesNavegacion.forEach((nombreBoton) => {
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: nombreBoton,
+        })
+      );
     });
 
-    // 1. Probar botones reales de la barra de navegación superior SPA
-    fireEvent.click(screen.getByRole('button', { name: 'El Colegio' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Ciclos Educativos' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Equipos de Trabajo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Normativas' }));
-    fireEvent.click(screen.getByRole('button', { name: '⚡ Admisión 2026' }));
+    expect(
+      Element.prototype.scrollIntoView
+    ).toHaveBeenCalledTimes(botonesNavegacion.length);
 
-    // 2. Probar botón dinámico remanente en los enlaces del footer
-    fireEvent.click(screen.getByRole('button', { name: "Colegio Bernardo O'Higgins" }));
-
-    // Validamos que se haya llamado a la función nativa de scroll por cada interacción exitosa
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
-
-    // Limpiamos el DOM de pruebas
-    elementosCreados.forEach(el => document.body.removeChild(el));
+    expect(
+      Element.prototype.scrollIntoView
+    ).toHaveBeenCalledWith({
+      behavior: 'smooth',
+    });
   });
 
-  it('debe verificar la presencia del link transaccional al portal Intranet', () => {
+  it('no llama a scrollIntoView cuando la sección solicitada no existe', () => {
     renderComponent();
-    
-    const enlaceLogin = screen.getByRole('link', { name: 'Portal Intranet →' });
-    expect(enlaceLogin).toBeInTheDocument();
-    expect(enlaceLogin.getAttribute('href')).toBe('/login');
-    
-    const enlaceLoginFooter = screen.getByRole('link', { name: 'Portal Intranet Central' });
-    expect(enlaceLoginFooter).toBeInTheDocument();
-    expect(enlaceLoginFooter.getAttribute('href')).toBe('/login');
-  });
 
-  it('no debe romper la ejecución ni llamar a scrollIntoView si el id de sección no existe en el DOM', () => {
-    renderComponent();
-    
-    // Forzamos el click en un botón pasándole un contexto vacío o simulando id que retorne null
-    const botonColegio = screen.getByRole('button', { name: 'El Colegio' });
-    
-    const spyGetElement = vi.spyOn(document, 'getElementById').mockReturnValueOnce(null);
-    
-    fireEvent.click(botonColegio);
-    
-    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    const spyGetElement = vi
+      .spyOn(document, 'getElementById')
+      .mockReturnValueOnce(null);
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Nuestro Colegio',
+      })
+    );
+
+    expect(
+      Element.prototype.scrollIntoView
+    ).not.toHaveBeenCalled();
+
     spyGetElement.mockRestore();
+  });
+
+  it('mantiene los accesos al portal educativo conectados con login', () => {
+    renderComponent();
+
+    const enlacePrincipal = screen.getByRole('link', {
+      name: 'Ingresar al Portal →',
+    });
+
+    expect(enlacePrincipal).toHaveAttribute(
+      'href',
+      '/login'
+    );
+
+    const enlaceFooter = screen.getByRole('link', {
+      name: 'Ingresar al Portal Educativo →',
+    });
+
+    expect(enlaceFooter).toHaveAttribute(
+      'href',
+      '/login'
+    );
+  });
+
+  it('expone los documentos institucionales reales en una nueva pestaña', () => {
+    renderComponent();
+
+    const proyectoEducativo = screen.getByRole('link', {
+      name: /Proyecto Educativo Institucional/i,
+    });
+
+    const convivenciaEscolar = screen.getByRole('link', {
+      name: /Manual y Protocolos de Convivencia Escolar/i,
+    });
+
+    const reglamentoInterno = screen.getByRole('link', {
+      name: /Reglamento Interno Escolar/i,
+    });
+
+    expect(
+      proyectoEducativo.getAttribute('href')
+    ).toContain('proyecto-educativo-cbo.pdf');
+
+    expect(
+      convivenciaEscolar.getAttribute('href')
+    ).toContain(
+      'protocolos-manual-de-convivencia-escolar.pdf'
+    );
+
+    expect(
+      reglamentoInterno.getAttribute('href')
+    ).toContain('reglamento-interno-escolar.pdf');
+
+    [
+      proyectoEducativo,
+      convivenciaEscolar,
+      reglamentoInterno,
+    ].forEach((enlace) => {
+      expect(enlace).toHaveAttribute(
+        'target',
+        '_blank'
+      );
+
+      expect(enlace).toHaveAttribute(
+        'rel',
+        'noopener noreferrer'
+      );
+    });
+  });
+
+  it('muestra el mapa y los enlaces reales de contacto, ubicación y redes sociales', () => {
+    renderComponent();
+
+    const mapa = screen.getByTitle(
+      "Mapa del Colegio Bernardo O'Higgins"
+    );
+
+    expect(mapa).toBeInTheDocument();
+
+    expect(
+      mapa.getAttribute('src')
+    ).toContain('google.com/maps');
+
+    expect(
+      mapa.getAttribute('src')
+    ).toContain('output=embed');
+
+    expect(mapa).toHaveAttribute(
+      'loading',
+      'lazy'
+    );
+
+    const telefono = screen.getByRole('link', {
+      name: '+56 9 9507 3517',
+    });
+
+    expect(telefono).toHaveAttribute(
+      'href',
+      'tel:+56995073517'
+    );
+
+    const googleMaps = screen.getByRole('link', {
+      name: 'Cómo llegar en Google Maps ↗',
+    });
+
+    expect(
+      googleMaps.getAttribute('href')
+    ).toContain('google.com/maps');
+
+    expect(googleMaps).toHaveAttribute(
+      'target',
+      '_blank'
+    );
+
+    expect(googleMaps).toHaveAttribute(
+      'rel',
+      'noopener noreferrer'
+    );
+
+    const instagram = screen.getByRole('link', {
+      name: 'Instagram ↗',
+    });
+
+    expect(instagram).toHaveAttribute(
+      'href',
+      'https://www.instagram.com/colegio_cbo/'
+    );
+
+    expect(instagram).toHaveAttribute(
+      'target',
+      '_blank'
+    );
+
+    const facebook = screen.getByRole('link', {
+      name: 'Facebook ↗',
+    });
+
+    expect(facebook).toHaveAttribute(
+      'href',
+      'https://www.facebook.com/cbocomunidad/'
+    );
+
+    expect(facebook).toHaveAttribute(
+      'target',
+      '_blank'
+    );
+  });
+
+  it('muestra el nombre institucional consistente en el copyright', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText(
+        "© 2026 Colegio Bernardo O'Higgins. Todos los derechos reservados."
+      )
+    ).toBeInTheDocument();
   });
 });
