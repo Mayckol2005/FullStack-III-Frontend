@@ -6,6 +6,7 @@ import {
     eliminarEstudianteBD 
 } from '../../services/estudianteService';
 import { obtenerCursosReal } from '../../services/academicoService';
+import { crearUsuario } from '../../services/usuarioService';
 import '../../styles/globals.css';
 
 const Estudiantes = () => {
@@ -25,7 +26,8 @@ const Estudiantes = () => {
         apellidos: '',
         email: '',
         fechaNacimiento: '',
-        cursoId: ''
+        cursoId: '',
+        password: ''
     };
     const [nuevoEstudiante, setNuevoEstudiante] = useState(estadoInicialNuevo);
 
@@ -102,24 +104,50 @@ const Estudiantes = () => {
 
     const handleMatricular = async (e) => {
         e.preventDefault();
-        const { rut, nombres, apellidos, cursoId } = nuevoEstudiante;
         
-        if (!rut || !nombres || !apellidos || !cursoId) {
-            mostrarAlerta("Por favor, completa los campos obligatorios (RUT, Nombres, Apellidos y Curso)", "error");
+        // Agregamos email y password a la extracción de variables
+        const { rut, nombres, apellidos, cursoId, email, password } = nuevoEstudiante;
+        
+        // Actualizamos la validación para asegurar que pongan correo y clave
+        if (!rut || !nombres || !apellidos || !cursoId || !email || !password) {
+            mostrarAlerta("Por favor, completa los campos obligatorios, incluyendo Correo y Contraseña.", "error");
             return;
         }
 
-        const payload = {
-            ...nuevoEstudiante,
+        // 1. Preparamos los datos SOLO para el microservicio de Estudiantes (sin la contraseña)
+        const payloadEstudiante = {
+            rut: rut,
+            nombres: nombres,
+            apellidos: apellidos,
+            email: email,
+            fechaNacimiento: nuevoEstudiante.fechaNacimiento,
             cursoId: Number(cursoId),
             estado: 'MATRICULADO' 
         };
 
-        const exito = await crearEstudiante(payload);
-        if (exito) {
-            mostrarAlerta("Estudiante matriculado correctamente", "exito");
-            setNuevoEstudiante(estadoInicialNuevo);
-            cargarDatos();
+        // Guardamos primero la parte académica
+        const exitoEstudiante = await crearEstudiante(payloadEstudiante);
+        
+        if (exitoEstudiante) {
+            // 2. Si se matriculó bien, preparamos los datos para su cuenta de Login
+            const payloadUsuario = {
+                rut: rut, 
+                nombre: `${nombres} ${apellidos}`,
+                email: email, 
+                password: password, 
+                rol: "ALUMNO" 
+            };
+            
+            // Creamos el usuario en el microservicio de Autenticación
+            const exitoUsuario = await crearUsuario(payloadUsuario);
+            
+            if (exitoUsuario) {
+                mostrarAlerta("¡Estudiante matriculado y cuenta de acceso creada correctamente!", "exito");
+                setNuevoEstudiante(estadoInicialNuevo);
+                cargarDatos();
+            } else {
+                mostrarAlerta("Alumno matriculado, pero falló la creación de su cuenta para el Login.", "error");
+            }
         } else {
             mostrarAlerta("Error al procesar la matrícula", "error");
         }
@@ -239,7 +267,10 @@ const Estudiantes = () => {
                             <input type="text" placeholder="Apellidos" value={nuevoEstudiante.apellidos} onChange={e => setNuevoEstudiante({...nuevoEstudiante, apellidos: e.target.value})} required className="input-custom" />
                         </div>
                         <div style={{ flex: 1, minWidth: '160px' }}>
-                            <input type="email" placeholder="Email Alumno" value={nuevoEstudiante.email} onChange={e => setNuevoEstudiante({...nuevoEstudiante, email: e.target.value})} className="input-custom" />
+                            <input type="email" placeholder="Email Alumno" value={nuevoEstudiante.email} onChange={e => setNuevoEstudiante({...nuevoEstudiante, email: e.target.value})} className="input-custom" required/>
+                        </div>
+                        <div style={{ flex: 1, minWidth: '150px' }}>
+                        <input type="password" placeholder="Contraseña Alumno" value={nuevoEstudiante.password} onChange={e => setNuevoEstudiante({...nuevoEstudiante, password: e.target.value})} required className="input-custom" />
                         </div>
                         <div style={{ flex: 1, minWidth: '140px' }}>
                             <input type="date" value={nuevoEstudiante.fechaNacimiento} onChange={e => setNuevoEstudiante({...nuevoEstudiante, fechaNacimiento: e.target.value})} className="input-custom" style={{ height: '42px', boxSizing: 'border-box' }} />

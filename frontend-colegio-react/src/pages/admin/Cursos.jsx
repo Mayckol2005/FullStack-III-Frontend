@@ -260,7 +260,7 @@ const Cursos = () => {
                                 placeholder="Ej: 1ro, 2do, 4to" 
                                 value={nuevoCurso.grado}
                                 onChange={(e) => setNuevoCurso({...nuevoCurso, grado: e.target.value})}
-                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                             />
                         </div>
                         <div>
@@ -270,20 +270,45 @@ const Cursos = () => {
                                 placeholder="Ej: A, B, C" 
                                 value={nuevoCurso.letra}
                                 onChange={(e) => setNuevoCurso({...nuevoCurso, letra: e.target.value})}
-                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} 
                             />
                         </div>
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '4px', color: '#475569', fontWeight: '500' }}>Nivel Educativo:</label>
-                            <select 
-                                value={nuevoCurso.nivel}
-                                onChange={(e) => setNuevoCurso({...nuevoCurso, nivel: e.target.value})}
-                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#fff' }}
+                        <div style={{ display: 'flex', gap: '10px', width: '100%', boxSizing: 'border-box' }}>
+                            <button
+                                type="button" 
+                                onClick={() => setNuevoCurso({ ...nuevoCurso, nivel: 'Básica' })}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    border: '2px solid var(--color-primario)', 
+                                    backgroundColor: nuevoCurso.nivel === 'Básica' ? 'var(--color-primario)' : 'white', 
+                                    color: nuevoCurso.nivel === 'Básica' ? 'white' : 'var(--color-primario)', 
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.2s ease-in-out' 
+                                }}
                             >
-                                <option value="">-- Seleccionar Nivel --</option>
-                                <option value="Básica">Educación Básica</option>
-                                <option value="Media">Educación Media</option>
-                            </select>
+                                Educación Básica
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={() => setNuevoCurso({ ...nuevoCurso, nivel: 'Media' })}
+                                style={{
+                                    flex: 1,
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    border: '2px solid var(--color-primario)',
+                                    backgroundColor: nuevoCurso.nivel === 'Media' ? 'var(--color-primario)' : 'white',
+                                    color: nuevoCurso.nivel === 'Media' ? 'white' : 'var(--color-primario)',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.2s ease-in-out'
+                                }}
+                            >
+                                Educación Media
+                            </button>
                         </div>
                         <button type="submit" className="btn-primary" style={{ padding: '10px', fontWeight: 'bold', width: '100%', marginTop: '8px' }}>
                             Guardar Curso
@@ -304,7 +329,7 @@ const Cursos = () => {
                                 placeholder="Ej: Matemáticas, Historia" 
                                 value={nuevaAsignatura.nombre}
                                 onChange={(e) => setNuevaAsignatura({...nuevaAsignatura, nombre: e.target.value})}
-                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }}
                             />
                         </div>
                         

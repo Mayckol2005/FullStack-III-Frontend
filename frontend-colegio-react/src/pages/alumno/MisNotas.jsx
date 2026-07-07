@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerNotasPorEstudiante } from '../services/evaluacionService'; 
+import { obtenerNotasPorEstudiante } from "../../services/evaluacionService";
 import '../../styles/globals.css';
 
 function MisNotas() {

@@ -10,6 +10,7 @@ const Comunicaciones = () => {
     const [contenido, setContenido] = useState('');
     const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
     const [cargando, setCargando] = useState(true);
+    const [mostrarModalConfirmacion, setMostrarModalConfirmacion] = useState(false);
 
     // --- Efectos ---
     useEffect(() => {
@@ -36,40 +37,49 @@ const Comunicaciones = () => {
             setCargando(false);
         }
     };
-    const handleSubmit = async (e) => {
+    const abrirConfirmacion = (e) => {
         e.preventDefault();
-
         if (!titulo.trim() || !contenido.trim()) {
-            mostrarAlerta('Todos los campos son obligatorios para emitir la circular.', 'error');
+            mostrarAlerta("Por favor, completa el título y el contenido del comunicado.", "error");
             return;
         }
+        setMostrarModalConfirmacion(true); 
+    };
 
-        // Alerta de confirmación
-        if (!window.confirm("¿Está seguro de publicar este comunicado?")) {
-            return; 
-        }
-
+    const confirmarYPublicar = async () => {
+        setMostrarModalConfirmacion(false);
         try {
-            const nuevoAviso = {
-                titulo: titulo.trim(),
-                contenido: contenido.trim()
-            };
-
+            const nuevoAviso = { titulo, contenido };
             const exito = await crearAviso(nuevoAviso);
             
-            if (exito === false) {
-                mostrarAlerta('El servidor rechazó el envío (revisa la consola).', 'error');
-                return;
+            if (exito) {
+                mostrarAlerta("Comunicado publicado correctamente", "exito");
+                setTitulo('');      
+                setContenido('');   
+                cargarDatos();      
+            } else {
+                mostrarAlerta("Error al publicar el comunicado", "error");
             }
-
-            mostrarAlerta('¡Comunicado oficial publicado con éxito!', 'exito');
-            
-            setTitulo('');
-            setContenido('');
-            cargarDatos();
         } catch (error) {
-            console.error("🔥 ERROR OCULTO DE REACT ANTES DE ENVIAR:", error);
-            mostrarAlerta(`Error de código: ${error.message}`, 'error');
+            console.error("Error publicando aviso:", error);
+            mostrarAlerta("Ocurrió un error al conectar con el servidor.", "error");
+        }
+    };
+
+    const handleEliminar = async (id) => {
+        if (window.confirm("¿Está seguro de eliminar este comunicado?")) {
+            try {
+                const exito = await eliminarAviso(id);
+                if (exito) {
+                    mostrarAlerta("Comunicado eliminado con éxito", "exito");
+                    cargarDatos();
+                } else {
+                    mostrarAlerta("No se pudo eliminar el comunicado", "error");
+                }
+            } catch (error) {
+                console.error("Error eliminando aviso:", error);
+                mostrarAlerta("Error en el servidor al intentar eliminar.", "error");
+            }
         }
     };
 
@@ -150,7 +160,7 @@ const Comunicaciones = () => {
                 <div className="card-panel" style={{ padding: '25px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                     <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', color: '#2d3748' }}>Redactar Nuevo Anuncio</h3>
                     
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    <form onSubmit={abrirConfirmacion} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                         <div>
                             <label htmlFor="titulo" style={{ display: 'block', marginBottom: '6px', fontWeight: '600', color: '#4a5568', fontSize: '14px' }}>
                                 Título del Comunicado
@@ -161,7 +171,7 @@ const Comunicaciones = () => {
                                 placeholder="Ej: Suspensión de Clases / Reunión"
                                 value={titulo}
                                 onChange={(e) => setTitulo(e.target.value)}
-                                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e0', fontSize: '15px', outline: 'none' }}
+                                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e0', boxSizing: 'border-box', fontSize: '15px', outline: 'none' }}
                             />
                         </div>
 
@@ -174,7 +184,7 @@ const Comunicaciones = () => {
                                 placeholder="Escriba de forma clara los detalles del anuncio..."
                                 value={contenido}
                                 onChange={(e) => setContenido(e.target.value)}
-                                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e0', fontSize: '15px', height: '120px', resize: 'none', outline: 'none' }}
+                                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e0', boxSizing: 'border-box', fontSize: '15px', height: '120px', resize: 'none', outline: 'none' }}
                             />
                         </div>
 
@@ -232,6 +242,42 @@ const Comunicaciones = () => {
                 </div>
 
             </div>
+            {mostrarModalConfirmacion && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999,
+                    backdropFilter: 'blur(3px)'
+                }}>
+                    <div className="card-panel" style={{ width: '100%', maxWidth: '400px', padding: '30px', textAlign: 'center', backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+                        <h3 style={{ marginTop: 0, color: '#334155', fontSize: '20px', fontWeight: '700' }}>Confirmar Publicación</h3>
+                        <p style={{ color: '#64748b', marginBottom: '25px', lineHeight: '1.5', fontSize: '15px' }}>
+                            ¿Está seguro de publicar este comunicado? Una vez publicado, será visible para toda la comunidad escolar.
+                        </p>
+                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+                            <button 
+                                type="button" 
+                                onClick={() => setMostrarModalConfirmacion(false)} 
+                                style={{ padding: '10px 20px', backgroundColor: '#cbd5e1', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', flex: 1 }}
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn-success" 
+                                onClick={confirmarYPublicar} 
+                                style={{ padding: '10px 20px', flex: 1, fontWeight: 'bold' }}
+                            >
+                                Sí, Publicar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
