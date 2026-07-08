@@ -14,7 +14,7 @@ export const obtenerAsignaturasPorDocente = async (
 ) => {
     try {
         return await apiClient(
-            `/asignaturas/docente/${docenteId}`
+            `/academico/asignaturas/docente/${docenteId}`
         ) || [];
     } catch (error) {
         console.error(

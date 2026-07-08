@@ -18,44 +18,44 @@ function AlumnoDashboard() {
     useEffect(() => {
         const cargarDatosDashboard = async () => {
             const usuarioId = localStorage.getItem('usuario_id');
+            const usuarioEmail = localStorage.getItem('usuario_email');
             const nombreLocal = localStorage.getItem('usuario_nombre');
             
             if (nombreLocal) setNombreAlumno(nombreLocal);
 
-            if (!usuarioId) {
-                console.warn("No se encontró el ID del usuario en el almacenamiento local.");
+            if (!usuarioId && !usuarioEmail) {
+                console.warn("No se encontró identificación del usuario en el almacenamiento local.");
                 setCargando(false);
                 return;
             }
 
             try {
-                const [resCurso, resNotas, resAsistencia, resAnotaciones] = await Promise.allSettled([
-                    apiClient(`/academico/estudiantes/usuario/${usuarioId}`), // Consulta datos académicos del alumno
-                    apiClient(`/evaluaciones/estudiante/${usuarioId}`),       // Consulta sus calificaciones
-                    apiClient(`/asistencia/estudiante/${usuarioId}`),         // Consulta sus registros de asistencia
-                    apiClient(`/academico/anotaciones/estudiante/${usuarioId}`) // Consulta sus anotaciones de conducta
+                const endpointEstudiante = usuarioEmail
+                    ? `/estudiantes/buscar-por-email?email=${encodeURIComponent(usuarioEmail)}`
+                    : `/estudiantes/${usuarioId}`;
+
+                const datosEstudiante = await apiClient(endpointEstudiante);
+                const estudianteId = datosEstudiante?.id || usuarioId;
+
+                const [resNotas, resAsistencia, resAnotaciones] = await Promise.allSettled([
+                    apiClient(`/evaluaciones/estudiante/${estudianteId}`),
+                    apiClient(`/asistencia/estudiante/${estudianteId}`),
+                    apiClient(`/anotaciones/estudiante/${estudianteId}`)
                 ]);
 
-                if (resCurso.status === 'fulfilled' && resCurso.value) {
+                console.log("Backend respondió con éxito. Datos recibidos del estudiante:", datosEstudiante);
 
-                    console.log("¡Backend respondió con éxito! Datos recibidos del estudiante:", resCurso.value); 
-                    
-                    const datosEstudiante = resCurso.value;
-
-                    // Evaluamos múltiples estructuras posibles que maneja tu Spring Boot
-                    if (typeof datosEstudiante.curso === 'string') {
-                        setCursoAlumno(datosEstudiante.curso); // Si viene directo como texto
-                    } else if (datosEstudiante.curso?.nombre) {
-                        setCursoAlumno(datosEstudiante.curso.nombre); // Si viene como objeto { curso: { nombre: "..." } }
-                    } else if (datosEstudiante.nombreCurso) {
-                        setCursoAlumno(datosEstudiante.nombreCurso); // Si viene como propiedad plana
-                    } else if (datosEstudiante.matricula?.curso?.nombre) {
-                        setCursoAlumno(datosEstudiante.matricula.curso.nombre); // Si pasa por un objeto matrícula
-                    } else {
-                        setCursoAlumno("Estructura de curso no reconocida");
-                    }
+                if (typeof datosEstudiante.curso === 'string') {
+                    setCursoAlumno(datosEstudiante.curso);
+                } else if (datosEstudiante.curso?.nombre) {
+                    setCursoAlumno(datosEstudiante.curso.nombre);
+                } else if (datosEstudiante.nombreCurso) {
+                    setCursoAlumno(datosEstudiante.nombreCurso);
+                } else if (datosEstudiante.matricula?.curso?.nombre) {
+                    setCursoAlumno(datosEstudiante.matricula.curso.nombre);
+                } else if (datosEstudiante.cursoId) {
+                    setCursoAlumno(`Curso #${datosEstudiante.cursoId}`);
                 } else {
-                    console.error("El microservicio académico falló. Razón del fallo:", resCurso.reason);
                     setCursoAlumno("No asignado");
                 }
 

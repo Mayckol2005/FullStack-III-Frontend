@@ -63,7 +63,8 @@ describe('Servicio de Usuarios', () => {
         it('debe enviar POST a /crear', async () => {
 
             fetch.mockResolvedValue({
-                ok: true
+                ok: true,
+                text: async () => JSON.stringify({ id: 1, nombre: 'admin' })
             });
 
             const usuario = {
@@ -72,7 +73,10 @@ describe('Servicio de Usuarios', () => {
 
             const resultado = await crearUsuario(usuario);
 
-            expect(resultado).toBe(true);
+            expect(resultado).toEqual({
+                exito: true,
+                usuario: { id: 1, nombre: 'admin' }
+            });
 
             expect(fetch).toHaveBeenCalledWith(
                 'http://localhost:8080/api/usuarios/crear',
@@ -82,7 +86,26 @@ describe('Servicio de Usuarios', () => {
             );
         });
 
-        it('debe retornar false cuando ocurre un error', async () => {
+        it('debe retornar mensaje cuando el backend rechaza la creación', async () => {
+
+            fetch.mockResolvedValue({
+                ok: false,
+                text: async () => JSON.stringify({
+                    password: 'La contraseña debe tener al menos 6 caracteres'
+                })
+            });
+
+            const resultado = await crearUsuario({
+                username: 'admin'
+            });
+
+            expect(resultado).toEqual({
+                exito: false,
+                mensaje: 'password: La contraseña debe tener al menos 6 caracteres'
+            });
+        });
+
+        it('debe retornar error de conexión cuando ocurre una excepción', async () => {
 
             fetch.mockRejectedValue(
                 new Error('Error creando usuario')
@@ -92,7 +115,10 @@ describe('Servicio de Usuarios', () => {
                 username: 'admin'
             });
 
-            expect(resultado).toBe(false);
+            expect(resultado).toEqual({
+                exito: false,
+                mensaje: 'Error de conexión al crear el usuario.'
+            });
         });
     });
 

@@ -12,6 +12,7 @@ function Usuarios() {
     
     // Nuevo estado para controlar la alerta de éxito
     const [mensajeExito, setMensajeExito] = useState(false);
+    const [mensajeError, setMensajeError] = useState('');
     
     const navigate = useNavigate();
 
@@ -137,7 +138,10 @@ function Usuarios() {
                     <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px' }}>Registrar Nuevo Personal</h3>
                     <form onSubmit={async (e) => { 
                         e.preventDefault(); 
-                        if(await crearUsuario(nuevoUsuario)){ 
+                        setMensajeError('');
+                        const resultado = await crearUsuario(nuevoUsuario);
+
+                        if(resultado.exito){ 
                             cargarDatos(); 
                             setNuevoUsuario({ rut: '', nombre: '', email: '', password: '', rol: '' }); 
                             // Mostrar alerta y ocultar después de 3 segundos
@@ -145,9 +149,25 @@ function Usuarios() {
                             setTimeout(() => {
                                 setMensajeExito(false);
                             }, 3000);
-                        } 
+                        } else {
+                            setMensajeError(resultado.mensaje || 'No se pudo crear el usuario.');
+                        }
                     }} 
                     style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        {mensajeError && (
+                            <div style={{
+                                flexBasis: '100%',
+                                backgroundColor: '#fff5f5',
+                                color: '#c53030',
+                                padding: '10px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid #fed7d7',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                {mensajeError}
+                            </div>
+                        )}
                         
                         <div style={{ flex: 1, minWidth: '150px' }}>
                             <input 
@@ -168,7 +188,7 @@ function Usuarios() {
                             <input type="email" placeholder="Email Corporativo" value={nuevoUsuario.email} onChange={e => setNuevoUsuario({...nuevoUsuario, email: e.target.value})} required className="input-custom" />
                         </div>
                         <div style={{ flex: 1, minWidth: '150px' }}>
-                            <input type="password" placeholder="Contraseña Acceso" value={nuevoUsuario.password} onChange={e => setNuevoUsuario({...nuevoUsuario, password: e.target.value})} required className="input-custom" />
+                            <input type="password" placeholder="Contraseña Acceso" value={nuevoUsuario.password} onChange={e => setNuevoUsuario({...nuevoUsuario, password: e.target.value})} minLength={6} required className="input-custom" />
                         </div>
                         <div style={{ minWidth: '150px' }}>
                             <select value={nuevoUsuario.rol} onChange={e => setNuevoUsuario({...nuevoUsuario, rol: e.target.value})} required className="select-custom">
