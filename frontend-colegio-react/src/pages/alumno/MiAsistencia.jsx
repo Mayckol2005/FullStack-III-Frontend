@@ -1,36 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { obtenerAsistenciaAlumnoActual } from '../../services/alumnoService';
 import '../../styles/globals.css';
 
 function MiAsistencia() {
 
     const [registroSeleccionado, setRegistroSeleccionado] = useState(null);
+    const [asistencias, setAsistencias] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState('');
 
-    const asistencias = [
-        {
-            id: 1,
-            fecha: '01/06/2026',
-            estado: 'Presente',
-            observacion: 'Sin observaciones.'
-        },
-        {
-            id: 2,
-            fecha: '02/06/2026',
-            estado: 'Presente',
-            observacion: 'Sin observaciones.'
-        },
-        {
-            id: 3,
-            fecha: '03/06/2026',
-            estado: 'Ausente',
-            observacion: 'Licencia médica presentada.'
-        },
-        {
-            id: 4,
-            fecha: '04/06/2026',
-            estado: 'Presente',
-            observacion: 'Sin observaciones.'
-        }
-    ];
+    useEffect(() => {
+        const cargarAsistencia = async () => {
+            try {
+                const registros = await obtenerAsistenciaAlumnoActual();
+                setAsistencias(registros);
+                setRegistroSeleccionado(registros[0] || null);
+            } catch (err) {
+                console.error('Error cargando asistencia del alumno:', err);
+                setError('No se pudo cargar la asistencia registrada.');
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarAsistencia();
+    }, []);
 
     const presentes =
         asistencias.filter(a => a.estado === 'Presente').length;
@@ -38,8 +32,9 @@ function MiAsistencia() {
     const ausentes =
         asistencias.filter(a => a.estado === 'Ausente').length;
 
-    const porcentaje =
-        Math.round((presentes / asistencias.length) * 100);
+    const porcentaje = asistencias.length === 0
+        ? 0
+        : Math.round((presentes / asistencias.length) * 100);
 
     return (
         <div className="dashboard-container">
@@ -103,7 +98,19 @@ function MiAsistencia() {
 
                     <h3>Historial</h3>
 
-                    {asistencias.map(registro => (
+                    {cargando && (
+                        <p>Cargando asistencia...</p>
+                    )}
+
+                    {!cargando && error && (
+                        <p style={{ color: 'var(--color-peligro)' }}>{error}</p>
+                    )}
+
+                    {!cargando && !error && asistencias.length === 0 && (
+                        <p>No hay registros de asistencia para este alumno.</p>
+                    )}
+
+                    {!cargando && !error && asistencias.map(registro => (
 
                         <div
                             key={registro.id}
