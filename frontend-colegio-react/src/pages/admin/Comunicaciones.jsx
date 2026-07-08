@@ -228,6 +228,20 @@ const Comunicaciones = () => {
                                             }}>
                                                 📍 General
                                             </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEliminar(aviso.id)}
+                                                title="Eliminar comunicado"
+                                                aria-label={`Eliminar comunicado ${aviso.titulo}`}
+                                                style={{
+                                                    border: 'none',
+                                                    background: 'none',
+                                                    cursor: 'pointer',
+                                                    padding: '4px'
+                                                }}
+                                            >
+                                                <i className="fas fa-trash" style={{ color: 'var(--color-peligro)', fontSize: '16px' }}></i>
+                                            </button>
                                         </div>
                                     </div>
                                     <p style={{ margin: '0 0 10px 0', color: '#4a5568', lineHeight: '1.5', fontSize: '15px' }}>{aviso.contenido}</p>

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080/api/asistencias';
+const API_URL = 'http://localhost:8080/api/asistencia';
 
 const getAuthHeaders = () => {
     const token = localStorage.getItem('token_colegio');

@@ -5,6 +5,29 @@ const obtenerCabeceras = () => ({
     'Authorization': `Bearer ${localStorage.getItem('token_colegio')}`
 });
 
+const leerRespuesta = async (res) => {
+    const texto = await res.text();
+    if (!texto) return null;
+
+    try {
+        return JSON.parse(texto);
+    } catch {
+        return texto;
+    }
+};
+
+const formatearError = (data) => {
+    if (!data) return 'No se pudo crear el usuario.';
+    if (typeof data === 'string') return data;
+    if (data.mensaje) return data.mensaje;
+    if (data.message) return data.message;
+    if (data.error) return data.error;
+
+    return Object.entries(data)
+        .map(([campo, mensaje]) => `${campo}: ${mensaje}`)
+        .join(' | ');
+};
+
 export const obtenerUsuarios = async () => {
     try {
         const res = await fetch(API_URL, { headers: obtenerCabeceras() });
@@ -23,10 +46,25 @@ export const crearUsuario = async (usuario) => {
             headers: obtenerCabeceras(),
             body: JSON.stringify(usuario)
         });
-        return res.ok;
+        const data = await leerRespuesta(res);
+
+        if (!res.ok) {
+            return {
+                exito: false,
+                mensaje: formatearError(data)
+            };
+        }
+
+        return {
+            exito: true,
+            usuario: data
+        };
     } catch (error) {
         console.error("Error creando usuario:", error);
-        return false;
+        return {
+            exito: false,
+            mensaje: 'Error de conexión al crear el usuario.'
+        };
     }
 };
 

@@ -49,7 +49,7 @@ describe('Usuarios', () => {
 
     test('permite crear usuario', async () => {
         obtenerUsuarios.mockResolvedValue([]);
-        crearUsuario.mockResolvedValue(true);
+        crearUsuario.mockResolvedValue({ exito: true });
 
         render(<Usuarios />);
 
@@ -98,6 +98,36 @@ describe('Usuarios', () => {
                 rol: 'PROFESOR'
             }));
         });
+    });
+
+    test('muestra error cuando crear usuario falla por validación', async () => {
+        obtenerUsuarios.mockResolvedValue([]);
+        crearUsuario.mockResolvedValue({
+            exito: false,
+            mensaje: 'password: La contraseña debe tener al menos 6 caracteres'
+        });
+
+        render(<Usuarios />);
+
+        fireEvent.change(screen.getByPlaceholderText(/RUT/i), {
+            target: { value: '111111111' }
+        });
+        fireEvent.change(screen.getByPlaceholderText(/Nombre Completo/i), {
+            target: { value: 'Juan Pérez' }
+        });
+        fireEvent.change(screen.getByPlaceholderText(/Email Corporativo/i), {
+            target: { value: 'juan@test.cl' }
+        });
+        fireEvent.change(screen.getByPlaceholderText(/Contraseña/i), {
+            target: { value: '123456' }
+        });
+        fireEvent.change(screen.getByRole('combobox'), {
+            target: { value: 'PROFESOR' }
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
+
+        expect(await screen.findByText(/La contraseña debe tener al menos 6 caracteres/i)).toBeInTheDocument();
     });
 
     test('permite iniciar edición y guardar cambios', async () => {
