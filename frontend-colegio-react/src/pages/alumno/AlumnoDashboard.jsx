@@ -1,14 +1,122 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '../../api/apiClient'; 
 import '../../styles/globals.css';
 
 function AlumnoDashboard() {
     const navigate = useNavigate();
 
-    const alumnoInfo = {
-        nombreCompleto: localStorage.getItem('usuario_nombre') || "Alumno",
-        curso: "4° Medio A",
-        periodo: "Año Escolar 2026"
+    const [nombreAlumno, setNombreAlumno] = useState("Cargando...");
+    const [cursoAlumno, setCursoAlumno] = useState("Cargando curso...");
+    const [periodoAlumno, setPeriodoAlumno] = useState("Año Escolar 2026");
+    
+    const [evaluaciones, setEvaluaciones] = useState([]);
+    const [asistencia, setAsistencia] = useState([]);
+    const [anotaciones, setAnotaciones] = useState([]);
+    const [cargando, setCargando] = useState(true);
+
+    useEffect(() => {
+        const cargarDatosDashboard = async () => {
+            const usuarioId = localStorage.getItem('usuario_id');
+            const nombreLocal = localStorage.getItem('usuario_nombre');
+            
+            if (nombreLocal) setNombreAlumno(nombreLocal);
+
+            if (!usuarioId) {
+                console.warn("No se encontró el ID del usuario en el almacenamiento local.");
+                setCargando(false);
+                return;
+            }
+
+            try {
+                const [resCurso, resNotas, resAsistencia, resAnotaciones] = await Promise.allSettled([
+                    apiClient(`/academico/estudiantes/usuario/${usuarioId}`), // Consulta datos académicos del alumno
+                    apiClient(`/evaluaciones/estudiante/${usuarioId}`),       // Consulta sus calificaciones
+                    apiClient(`/asistencia/estudiante/${usuarioId}`),         // Consulta sus registros de asistencia
+                    apiClient(`/academico/anotaciones/estudiante/${usuarioId}`) // Consulta sus anotaciones de conducta
+                ]);
+
+                if (resCurso.status === 'fulfilled' && resCurso.value) {
+
+                    console.log("¡Backend respondió con éxito! Datos recibidos del estudiante:", resCurso.value); 
+                    
+                    const datosEstudiante = resCurso.value;
+
+                    // Evaluamos múltiples estructuras posibles que maneja tu Spring Boot
+                    if (typeof datosEstudiante.curso === 'string') {
+                        setCursoAlumno(datosEstudiante.curso); // Si viene directo como texto
+                    } else if (datosEstudiante.curso?.nombre) {
+                        setCursoAlumno(datosEstudiante.curso.nombre); // Si viene como objeto { curso: { nombre: "..." } }
+                    } else if (datosEstudiante.nombreCurso) {
+                        setCursoAlumno(datosEstudiante.nombreCurso); // Si viene como propiedad plana
+                    } else if (datosEstudiante.matricula?.curso?.nombre) {
+                        setCursoAlumno(datosEstudiante.matricula.curso.nombre); // Si pasa por un objeto matrícula
+                    } else {
+                        setCursoAlumno("Estructura de curso no reconocida");
+                    }
+                } else {
+                    console.error("El microservicio académico falló. Razón del fallo:", resCurso.reason);
+                    setCursoAlumno("No asignado");
+                }
+
+                // Asignación de Evaluaciones 
+                if (resNotas.status === 'fulfilled' && resNotas.value) {
+                    setEvaluaciones(resNotas.value || []);
+                }
+
+                // Asignación de Asistencia
+                if (resAsistencia.status === 'fulfilled' && resAsistencia.value) {
+                    setAsistencia(resAsistencia.value || []);
+                }
+
+                // Asignación de Anotaciones
+                if (resAnotaciones.status === 'fulfilled' && resAnotaciones.value) {
+                    setAnotaciones(resAnotaciones.value || []);
+                }
+
+            } catch (error) {
+                console.error("Error crítico al inicializar los datos del dashboard:", error);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatosDashboard();
+    }, []);
+
+    // 3. Lógica matemática adaptable para procesar los datos cuando aparezcan
+    const mostrarPromedio = () => {
+        if (!evaluaciones || evaluaciones.length === 0) return "Sin calificaciones";
+        
+        let sumaNotas = 0;
+        let totalNotas = 0;
+
+        evaluaciones.forEach(ev => {
+            if (ev.nota && ev.nota > 0) {
+                sumaNotas += ev.nota;
+                totalNotas++;
+            } else {
+                if (ev.nota1 && ev.nota1 > 0) { sumaNotas += ev.nota1; totalNotas++; }
+                if (ev.nota2 && ev.nota2 > 0) { sumaNotas += ev.nota2; totalNotas++; }
+                if (ev.nota3 && ev.nota3 > 0) { sumaNotas += ev.nota3; totalNotas++; }
+            }
+        });
+
+        if (totalNotas === 0) return "Sin calificaciones";
+        return (sumaNotas / totalNotas).toFixed(1);
+    };
+
+    const mostrarAsistencia = () => {
+        if (!asistencia || asistencia.length === 0) return "Sin registros";
+        
+        const diasPresente = asistencia.filter(a => a.presente || a.estado === 'PRESENTE').length;
+        const porcentaje = (diasPresente / asistencia.length) * 100;
+        return `${porcentaje.toFixed(0)}%`;
+    };
+
+    const mostrarAnotaciones = () => {
+        if (!anotaciones || anotaciones.length === 0) return "0 registros";
+        return `${anotaciones.length} ${anotaciones.length === 1 ? 'registro' : 'registros'}`;
     };
 
     return (
@@ -16,15 +124,15 @@ function AlumnoDashboard() {
 
             <div className="docente-banner">
                 <div className="docente-banner-info">
-                    <h2>¡Bienvenido(a), {alumnoInfo.nombreCompleto}!</h2>
+                    <h2>¡Bienvenido(a), {nombreAlumno}!</h2>
                     <p>
-                        🎓 <strong>Curso:</strong> {alumnoInfo.curso}
+                        🎓 <strong>Curso:</strong> {cursoAlumno} {/* 👈 Curso dinámico desde la BD */}
                     </p>
                 </div>
 
                 <div className="docente-banner-meta">
                     <div className="periodo">
-                        {alumnoInfo.periodo}
+                        {periodoAlumno}
                     </div>
 
                     <div className="institucion">
@@ -52,14 +160,13 @@ function AlumnoDashboard() {
                             gap: '15px'
                         }}
                     >
-
                         <div
                             className="team-card"
                             onClick={() => navigate('/alumno/notas')}
                             style={{ cursor: 'pointer' }}
                         >
                             <h4>📊 Promedio General</h4>
-                            <p>6.2</p>
+                            <p>{cargando ? "Cargando..." : mostrarPromedio()}</p>
                         </div>
 
                         <div
@@ -68,7 +175,7 @@ function AlumnoDashboard() {
                             style={{ cursor: 'pointer' }}
                         >
                             <h4>📅 Asistencia</h4>
-                            <p>92%</p>
+                            <p>{cargando ? "Cargando..." : mostrarAsistencia()}</p>
                         </div>
 
                         <div
@@ -77,7 +184,7 @@ function AlumnoDashboard() {
                             style={{ cursor: 'pointer' }}
                         >
                             <h4>📝 Anotaciones</h4>
-                            <p>2 registros</p>
+                            <p>{cargando ? "Cargando..." : mostrarAnotaciones()}</p>
                         </div>
 
                     </div>
