@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerNotasPorEstudiante } from "../../services/evaluacionService";
+import { obtenerNotasAlumnoActual } from '../../services/alumnoService';
 import '../../styles/globals.css';
 
 function MisNotas() {
     const [notas, setNotas] = useState([]);
     const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const cargarNotas = async () => {
-            // Asumimos que al hacer login guardaste el ID del alumno en localStorage
-            const estudianteId = localStorage.getItem('usuario_id'); 
-            
-            if (estudianteId) {
-                const data = await obtenerNotasPorEstudiante(estudianteId);
+            try {
+                const data = await obtenerNotasAlumnoActual();
                 setNotas(data);
-            } else {
-                console.error("No se encontró el ID del estudiante en localStorage");
+            } catch (err) {
+                console.error('Error cargando notas del alumno:', err);
+                setError('No se pudieron cargar las calificaciones registradas.');
+            } finally {
+                setCargando(false);
             }
-            setCargando(false);
         };
 
         cargarNotas();
@@ -54,6 +54,10 @@ function MisNotas() {
             <div className="card-panel" style={{ padding: 0 }}>
                 {cargando ? (
                     <div style={{ padding: '20px', textAlign: 'center' }}>Cargando notas... ⏳</div>
+                ) : error ? (
+                    <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-peligro)' }}>
+                        {error}
+                    </div>
                 ) : (
                     <div className="table-responsive">
                         <table className="table-custom">

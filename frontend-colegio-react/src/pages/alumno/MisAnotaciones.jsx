@@ -1,30 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { obtenerAnotacionesAlumnoActual } from '../../services/alumnoService';
 import '../../styles/globals.css';
 
 function MisAnotaciones() {
 
     const [anotacionSeleccionada, setAnotacionSeleccionada] = useState(null);
+    const [anotaciones, setAnotaciones] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState('');
 
-    const anotaciones = [
-        {
-            id: 1,
-            fecha: '05/06/2026',
-            tipo: 'POSITIVA',
-            descripcion: 'Participación destacada en clases.'
-        },
-        {
-            id: 2,
-            fecha: '10/06/2026',
-            tipo: 'POSITIVA',
-            descripcion: 'Entrega puntual de trabajos.'
-        },
-        {
-            id: 3,
-            fecha: '15/06/2026',
-            tipo: 'OBSERVACION',
-            descripcion: 'Debe mejorar la puntualidad.'
-        }
-    ];
+    useEffect(() => {
+        const cargarAnotaciones = async () => {
+            try {
+                const registros = await obtenerAnotacionesAlumnoActual();
+                setAnotaciones(registros);
+                setAnotacionSeleccionada(registros[0] || null);
+            } catch (err) {
+                console.error('Error cargando anotaciones del alumno:', err);
+                setError('No se pudieron cargar las anotaciones registradas.');
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarAnotaciones();
+    }, []);
 
     const positivas =
         anotaciones.filter(a => a.tipo === 'POSITIVA').length;
@@ -78,7 +78,19 @@ function MisAnotaciones() {
 
                     <h3>Historial</h3>
 
-                    {anotaciones.map(anotacion => (
+                    {cargando && (
+                        <p>Cargando anotaciones...</p>
+                    )}
+
+                    {!cargando && error && (
+                        <p style={{ color: 'var(--color-peligro)' }}>{error}</p>
+                    )}
+
+                    {!cargando && !error && anotaciones.length === 0 && (
+                        <p>No hay anotaciones registradas para este alumno.</p>
+                    )}
+
+                    {!cargando && !error && anotaciones.map(anotacion => (
 
                         <div
                             key={anotacion.id}
